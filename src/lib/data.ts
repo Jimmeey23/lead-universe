@@ -8,6 +8,38 @@ export interface FollowUp {
   c: string;
 }
 
+/** One succeeded sale, joined to a lead on email → member id. */
+export interface Sale {
+  day: number;        // days since epoch (UTC)
+  date: string;       // YYYY-MM-DD
+  product: string;
+  category: string;
+  membership: string; // "—" when the sale carries no membership
+  location: string;
+  soldBy: string;
+  value: number;
+  /** Revenue that represents joining the studio: not retail/credits, not an intro offer. */
+  converting: boolean;
+  /** Dated on or after the lead was created. */
+  postLead: boolean;
+}
+
+/** One class booking, joined to a lead on email → member id. */
+export interface Visit {
+  day: number;
+  date: string;       // YYYY-MM-DD
+  cls: string;
+  location: string;
+  teacher: string;
+  kind: string;       // "Is New" bucket: New - Trial Class, Repeat Visit, …
+  membership: string;
+  attended: boolean;
+  cancelled: boolean;
+  lateCancelled: boolean;
+  noShow: boolean;
+  postLead: boolean;
+}
+
 export interface Lead {
   id: number;
   name: string;
@@ -25,16 +57,35 @@ export interface Lead {
   memberId: string;
   remarks: string;
   fups: FollowUp[];
+  /** Converting purchases made after the lead was created. */
   purchases: number;
+  /** Revenue from every post-lead sale, converting or not. */
   ltv: number;
+  /** Classes actually attended after the lead was created. */
   visits: number;
+  /** Attended at least one class after enquiring. */
   trialed: boolean;
+  /** Bought a non-intro, non-retail package/membership after enquiring. */
   conv: boolean;
   retained: boolean;
+
+  // joined history (chronological)
+  sales: Sale[];
+  visitLog: Visit[];
+  totalSpend: number;      // every joined sale, including pre-lead
+  bookings: number;        // post-lead bookings, attended or not
+  cancellations: number;   // post-lead cancelled bookings
+  noShows: number;
+  firstVisit: string;      // "" when never seen in class
+  lastVisit: string;
+  trialDate: string;       // first attended post-lead class
+  firstSaleDate: string;   // first converting post-lead sale
+
   // derived
   createdTs: number;
   createdMonth: string; // YYYY-MM
   convertedTs: number | null;
+  daysToConvert: number | null;
   fupCount: number;
   search: string;
 }
@@ -49,15 +100,33 @@ export interface Dicts {
   chan: string[];
 }
 
+/** Dictionaries for the joined sales / bookings tables. */
+interface JoinDicts {
+  prod: string[];
+  cat: string[];
+  loc: string[];
+  sold: string[];
+  cls: string[];
+  teach: string[];
+  isnew: string[];
+  memb: string[];
+}
+
 export interface LeadData {
   leads: Lead[];
   dicts: Dicts;
   totalLtv: number;
   minDate: string;
   maxDate: string;
+  salesCount: number;
+  visitsCount: number;
 }
 
 /* ─────────────────────────── Decode ─────────────────────────────── */
+
+const DAY_MS = 86400000;
+const dayToIso = (d: number) => new Date(d * DAY_MS).toISOString().slice(0, 10);
+const isoToDay = (iso: string) => (iso ? Math.round(Date.parse(iso + "T00:00:00Z") / DAY_MS) : -1);
 
 let cache: LeadData | null = null;
 
@@ -66,8 +135,10 @@ export async function loadLeads(): Promise<LeadData> {
   const bin = Uint8Array.from(atob(PAYLOAD_GZ_B64), (c) => c.charCodeAt(0));
   const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));
   const text = await new Response(stream).text();
-  const raw = JSON.parse(text) as { d: Dicts; s: string[]; r: any[][] };
-  const { d, s } = raw;
+  const raw = JSON.parse(text) as {
+    d: Dicts; s: string[]; r: any[][]; jd: JoinDicts; sl: number[][]; vs: number[][];
+  };
+  const { d, s, jd } = raw;
   const S = (i: number) => (i < 0 ? "" : s[i]);
 
   let totalLtv = 0;
@@ -76,12 +147,9 @@ export async function loadLeads(): Promise<LeadData> {
 
   const leads: Lead[] = raw.r.map((r) => {
     const created = r[4] as string;
-    const converted = (r[5] as string) || "";
     const createdTs = created ? Date.parse(created + "T00:00:00") : 0;
-    const convertedTs = converted ? Date.parse(converted + "T00:00:00") : null;
     if (createdTs && createdTs < minTs) minTs = createdTs;
     if (createdTs && createdTs > maxTs) maxTs = createdTs;
-    totalLtv += r[17];
     const fups: FollowUp[] = [];
     const f = r[15] as any[];
     for (let i = 0; i < f.length; i += 2) fups.push({ d: f[i] as string, c: S(f[i + 1]) });
@@ -91,7 +159,7 @@ export async function loadLeads(): Promise<LeadData> {
       phone: r[2],
       email: r[3],
       created,
-      converted,
+      converted: "",
       stage: d.stage[r[6]],
       status: d.status[r[7]],
       center: d.center[r[8]],
@@ -102,19 +170,107 @@ export async function loadLeads(): Promise<LeadData> {
       memberId: r[13],
       remarks: S(r[14]),
       fups,
-      purchases: r[16],
-      ltv: r[17],
-      visits: r[18],
-      trialed: r[19] === 1,
-      conv: r[20] === 1,
+      purchases: 0,
+      ltv: 0,
+      visits: 0,
+      trialed: false,
+      conv: false,
       retained: r[21] === 1,
+      sales: [],
+      visitLog: [],
+      totalSpend: 0,
+      bookings: 0,
+      cancellations: 0,
+      noShows: 0,
+      firstVisit: "",
+      lastVisit: "",
+      trialDate: "",
+      firstSaleDate: "",
       createdTs,
       createdMonth: created.slice(0, 7),
-      convertedTs,
+      convertedTs: null,
+      daysToConvert: null,
       fupCount: fups.length,
       search: `${r[1]} ${r[3]} ${r[2]} ${r[0]} ${S(r[14])}`.toLowerCase(),
-    };
+    } as Lead;
   });
+
+  // ── attach sales history ──────────────────────────────────────────
+  // rows: [leadIdx, day, prod, cat, loc, soldBy, value, converting, membership]
+  const createdDay = leads.map((l) => isoToDay(l.created));
+  for (const row of raw.sl) {
+    const l = leads[row[0]];
+    const cd = createdDay[row[0]];
+    const postLead = cd >= 0 && row[1] >= cd;
+    const sale: Sale = {
+      day: row[1],
+      date: dayToIso(row[1]),
+      product: jd.prod[row[2]],
+      category: jd.cat[row[3]],
+      location: jd.loc[row[4]],
+      soldBy: jd.sold[row[5]],
+      value: row[6],
+      converting: row[7] === 1,
+      membership: jd.memb[row[8]],
+      postLead,
+    };
+    l.sales.push(sale);
+    l.totalSpend += sale.value;
+    if (!postLead) continue;
+    l.ltv += sale.value;
+    if (sale.converting) {
+      l.purchases++;
+      if (!l.conv) {
+        l.conv = true;
+        l.firstSaleDate = sale.date;
+        l.converted = sale.date;
+        l.convertedTs = Date.parse(sale.date + "T00:00:00");
+        l.daysToConvert = Math.max(0, row[1] - cd);
+      }
+    }
+  }
+
+  // ── attach visit history ──────────────────────────────────────────
+  // rows: [leadIdx, day, cls, loc, teacher, isNew, flags, membership]
+  for (const row of raw.vs) {
+    const l = leads[row[0]];
+    const cd = createdDay[row[0]];
+    const postLead = cd >= 0 && row[1] >= cd;
+    const flags = row[6];
+    const attended = (flags & 1) === 1;
+    const visit: Visit = {
+      day: row[1],
+      date: dayToIso(row[1]),
+      cls: jd.cls[row[2]],
+      location: jd.loc[row[3]],
+      teacher: jd.teach[row[4]],
+      kind: jd.isnew[row[5]],
+      membership: jd.memb[row[7]],
+      attended,
+      cancelled: (flags & 2) === 2,
+      lateCancelled: (flags & 4) === 4,
+      noShow: (flags & 8) === 8,
+      postLead,
+    };
+    l.visitLog.push(visit);
+    if (attended) {
+      if (!l.firstVisit) l.firstVisit = visit.date;
+      l.lastVisit = visit.date;
+    }
+    if (!postLead) continue;
+    l.bookings++;
+    if (visit.cancelled) l.cancellations++;
+    if (visit.noShow) l.noShows++;
+    if (attended) {
+      l.visits++;
+      if (!l.trialed) {
+        l.trialed = true;
+        l.trialDate = visit.date;
+      }
+    }
+  }
+
+  for (const l of leads) totalLtv += l.ltv;
 
   const iso = (ts: number) => new Date(ts).toISOString().slice(0, 10);
   cache = {
@@ -123,6 +279,8 @@ export async function loadLeads(): Promise<LeadData> {
     totalLtv,
     minDate: iso(minTs),
     maxDate: iso(maxTs),
+    salesCount: raw.sl.length,
+    visitsCount: raw.vs.length,
   };
   return cache;
 }

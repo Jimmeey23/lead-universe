@@ -38,6 +38,60 @@
   --color-violet-400: #a78bfa;
   --color-rose-400: #fb7185;
   --color-cyan-400: #22d3ee;
+
+  /* Text that always sits on a bright accent fill (ember, mint, gold chips) —
+     stays dark in both themes. */
+  --color-onaccent: #0b0c0f;
+
+  --shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.55);
+}
+
+/* ─────────────────────── Light theme ───────────────────────
+   Only the token values change: every component keeps the same
+   semantic class names (ink = surfaces, mist = text, line = borders). */
+:root[data-theme="light"] {
+  --color-ink-950: #f6f7f9;
+  --color-ink-900: #ffffff;
+  --color-ink-850: #f3f4f7;
+  --color-ink-800: #edeff3;
+  --color-ink-750: #e6e8ee;
+  --color-ink-700: #dde0e8;
+
+  --color-line-soft: #e7e9ef;
+  --color-line: #d9dde5;
+  --color-line-strong: #c2c8d4;
+
+  --color-mist-100: #101318;
+  --color-mist-200: #1e222a;
+  --color-mist-300: #39404d;
+  --color-mist-400: #5b6373;
+  --color-mist-500: #79808f;
+  --color-mist-600: #98a0ae;
+
+  --color-ember-300: #ff7f57;
+  --color-ember-400: #ee4f28;
+  --color-ember-500: #f0512c;
+  --color-ember-600: #d33f1d;
+  --color-ember-950: #fdece6;
+
+  --color-mint-300: #34d399;
+  --color-mint-400: #0f9d6e;
+  --color-mint-950: #e6f7f0;
+
+  --color-gold-400: #c98a00;
+  --color-sky-400: #0b8fd4;
+  --color-violet-400: #7c5cf5;
+  --color-rose-400: #e4374f;
+  --color-cyan-400: #0e93b0;
+
+  --shadow-panel: 0 18px 44px rgba(16, 19, 24, 0.14);
+}
+
+html {
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 html,
@@ -51,23 +105,23 @@ body {
 
 ::selection {
   background: rgba(255, 107, 71, 0.28);
-  color: #fff;
+  color: var(--color-mist-100);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2c303a transparent;
+  scrollbar-color: var(--color-line-strong) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #2c303a;
+  background: var(--color-line-strong);
   border-radius: 8px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #3a3f4c;
+  background: var(--color-mist-600);
 }
 *::-webkit-scrollbar-corner {
   background: transparent;
@@ -83,6 +137,13 @@ body {
   border: 1px solid var(--color-line-soft);
   border-radius: 14px;
 }
+:root[data-theme="light"] .card {
+  background: var(--color-ink-900);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, 0.04), 0 8px 24px -16px rgba(16, 19, 24, 0.22);
+}
+:root[data-theme="light"] .card-hover:hover {
+  box-shadow: 0 2px 6px rgba(16, 19, 24, 0.07), 0 14px 32px -18px rgba(16, 19, 24, 0.3);
+}
 
 .card-hover {
   transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
@@ -96,9 +157,13 @@ body {
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   background-size: 40px 40px;
 }
+:root[data-theme="light"] .grid-bg {
+  background-image: linear-gradient(rgba(16, 19, 24, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 19, 24, 0.035) 1px, transparent 1px);
+}
 
 .text-gradient {
-  background: linear-gradient(100deg, #fff 20%, #ffb193 55%, #ff6b47 90%);
+  background: linear-gradient(100deg, var(--color-mist-100) 20%, var(--color-ember-300) 55%, var(--color-ember-500) 90%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -116,13 +181,16 @@ body {
 .recharts-tooltip-cursor {
   fill: rgba(255, 255, 255, 0.04);
 }
+:root[data-theme="light"] .recharts-tooltip-cursor {
+  fill: rgba(16, 19, 24, 0.05);
+}
 .recharts-cartesian-axis-tick text {
-  fill: #6e7380;
+  fill: var(--color-mist-500);
   font-size: 10.5px;
   font-family: "IBM Plex Mono", monospace;
 }
 .recharts-cartesian-grid line {
-  stroke: #1d2027;
+  stroke: var(--color-line-soft);
 }
 
 @keyframes eq {
@@ -150,4 +218,14 @@ body {
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.55);
   cursor: pointer;
+}
+:root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.35);
+}
+
+.scrim {
+  background: rgba(8, 9, 11, 0.7);
+}
+:root[data-theme="light"] .scrim {
+  background: rgba(24, 28, 36, 0.32);
 }

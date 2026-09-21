@@ -84,7 +84,7 @@ export function FilterBar() {
                   onClick={() => applyPreset(p.key)}
                   className={cn(
                     "rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
-                    preset === p.key ? "bg-ink-700 text-white ring-1 ring-line-strong" : "text-mist-500 hover:text-mist-200",
+                    preset === p.key ? "bg-ink-700 text-mist-100 ring-1 ring-line-strong" : "text-mist-500 hover:text-mist-200",
                   )}
                 >
                   {p.label}
@@ -94,7 +94,7 @@ export function FilterBar() {
                 onClick={() => applyPreset("range")}
                 className={cn(
                   "rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
-                  preset === "range" ? "bg-ink-700 text-white ring-1 ring-line-strong" : "text-mist-500 hover:text-mist-200",
+                  preset === "range" ? "bg-ink-700 text-mist-100 ring-1 ring-line-strong" : "text-mist-500 hover:text-mist-200",
                 )}
               >
                 Range

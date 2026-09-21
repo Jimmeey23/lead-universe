@@ -81,7 +81,7 @@ export function Segmented<T extends string>({
               size === "md" && "px-3 py-1.5 text-[12px]",
               size === "sm" && "px-2.5 py-1 text-[11.5px]",
               size === "xs" && "px-2 py-0.5 text-[10.5px]",
-              active ? "text-white" : "text-mist-500 hover:text-mist-200",
+              active ? "text-mist-100" : "text-mist-500 hover:text-mist-200",
             )}
           >
             {active && (
@@ -147,7 +147,7 @@ export function MultiSelect({
         {icon}
         <span>{label}</span>
         {n > 0 && (
-          <span className="tnum rounded bg-ember-500 px-1 py-px text-[10px] font-semibold text-ink-950">{n}</span>
+          <span className="tnum rounded bg-ember-500 px-1 py-px text-[10px] font-semibold text-onaccent">{n}</span>
         )}
         <ChevronDown className={cn("size-3.5 opacity-60 transition-transform", open && "rotate-180")} />
       </button>
@@ -191,7 +191,7 @@ export function MultiSelect({
                     onClick={() => toggle(o.value)}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] transition-colors",
-                      on ? "bg-ink-700/80 text-white" : "text-mist-300 hover:bg-ink-750",
+                      on ? "bg-ink-700/80 text-mist-100" : "text-mist-300 hover:bg-ink-750",
                     )}
                   >
                     <span
@@ -200,7 +200,7 @@ export function MultiSelect({
                         on ? "border-ember-500 bg-ember-500" : "border-line-strong bg-ink-850",
                       )}
                     >
-                      {on && <Check className="size-2.5 text-ink-950" strokeWidth={3.5} />}
+                      {on && <Check className="size-2.5 text-onaccent" strokeWidth={3.5} />}
                     </span>
                     {o.color && <span className="size-1.5 shrink-0 rounded-full" style={{ background: o.color }} />}
                     <span className="min-w-0 flex-1 truncate">{o.label ?? (short ? short(o.value) : o.value)}</span>
@@ -235,7 +235,7 @@ export function FlagToggle({
       title={`${label}: ${value === "any" ? "ignored" : value}. Click to cycle.`}
       className={cn(
         "flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11.5px] font-medium transition-colors",
-        value === "yes" && "border-transparent text-ink-950",
+        value === "yes" && "border-transparent text-onaccent",
         value === "no" && "border-rose-400/50 bg-rose-400/10 text-rose-400",
         value === "any" && "border-line bg-ink-850 text-mist-500 hover:text-mist-200 hover:border-line-strong",
       )}
@@ -244,7 +244,7 @@ export function FlagToggle({
       <span
         className={cn(
           "size-1.5 rounded-full",
-          value === "any" ? "bg-mist-600" : value === "yes" ? "bg-ink-950" : "bg-rose-400",
+          value === "any" ? "bg-mist-600" : value === "yes" ? "bg-onaccent" : "bg-rose-400",
         )}
       />
       {label}
@@ -258,7 +258,7 @@ export function FlagToggle({
 export function Avatar({ name, size = 30 }: { name: string; size?: number }) {
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-full font-display font-semibold text-ink-950/90"
+      className="flex shrink-0 items-center justify-center rounded-full font-display font-semibold text-onaccent/90"
       style={{
         width: size,
         height: size,

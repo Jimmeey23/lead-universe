@@ -276,3 +276,118 @@ export function topNWithOther<T extends { total?: number; count?: number }>(rows
   const otherCount = rows.slice(n).reduce((s, r) => s + (r.total ?? r.count ?? 0), 0);
   return { top, otherCount };
 }
+
+/* ────────────────────── Associate performance ────────────────────── */
+
+export interface AssociateStat {
+  name: string;
+  leads: number;
+  trialed: number;
+  converted: number;
+  retained: number;
+  revenue: number;          // post-lead revenue on their leads
+  purchases: number;
+  visits: number;
+  fups: number;
+  touched: number;          // leads with at least one follow-up or a remark
+  untouched: number;
+  convRate: number;
+  trialRate: number;
+  trialToWin: number;
+  retentionOfWon: number;
+  touchRate: number;
+  avgFups: number;
+  revPerLead: number;
+  avgDeal: number;          // revenue per converted lead
+  medianDaysToConvert: number | null;
+  medianDaysToFirstTouch: number | null;
+  share: number;            // % of all leads in the current filter
+  months: Map<string, { leads: number; won: number }>;
+  topSource: string;
+  topCentre: string;
+}
+
+const median = (xs: number[]): number | null => {
+  if (!xs.length) return null;
+  const a = [...xs].sort((x, y) => x - y);
+  const mid = a.length >> 1;
+  return a.length % 2 ? a[mid] : Math.round((a[mid - 1] + a[mid]) / 2);
+};
+
+const topKey = (m: Map<string, number>): string => {
+  let best = "—", n = -1;
+  m.forEach((v, k) => {
+    if (v > n) { n = v; best = k; }
+  });
+  return best;
+};
+
+export function associateStats(rows: Lead[]): AssociateStat[] {
+  const groups = new Map<string, Lead[]>();
+  for (const l of rows) {
+    const arr = groups.get(l.associate);
+    if (arr) arr.push(l);
+    else groups.set(l.associate, [l]);
+  }
+
+  const out: AssociateStat[] = [];
+  groups.forEach((ls, name) => {
+    let trialed = 0, converted = 0, retained = 0, revenue = 0, purchases = 0, visits = 0, fups = 0, touched = 0;
+    const convDays: number[] = [];
+    const touchDays: number[] = [];
+    const months = new Map<string, { leads: number; won: number }>();
+    const sources = new Map<string, number>();
+    const centres = new Map<string, number>();
+
+    for (const l of ls) {
+      if (l.trialed) trialed++;
+      if (l.conv) converted++;
+      if (l.retained) retained++;
+      revenue += l.ltv;
+      purchases += l.purchases;
+      visits += l.visits;
+      fups += l.fupCount;
+      if (l.fupCount > 0 || l.remarks) touched++;
+      if (l.daysToConvert != null) convDays.push(l.daysToConvert);
+      if (l.fupCount > 0 && l.createdTs && l.fups[0]?.d) {
+        const d = Math.round((Date.parse(l.fups[0].d + "T00:00:00") - l.createdTs) / 86400000);
+        if (Number.isFinite(d) && d >= 0 && d < 400) touchDays.push(d);
+      }
+      const mo = months.get(l.createdMonth) ?? { leads: 0, won: 0 };
+      mo.leads++;
+      if (l.conv) mo.won++;
+      months.set(l.createdMonth, mo);
+      sources.set(l.source, (sources.get(l.source) ?? 0) + 1);
+      centres.set(l.center, (centres.get(l.center) ?? 0) + 1);
+    }
+
+    const leads = ls.length;
+    out.push({
+      name, leads, trialed, converted, retained, revenue, purchases, visits, fups,
+      touched, untouched: leads - touched,
+      convRate: leads ? (converted / leads) * 100 : 0,
+      trialRate: leads ? (trialed / leads) * 100 : 0,
+      trialToWin: trialed ? (converted / trialed) * 100 : 0,
+      retentionOfWon: converted ? (retained / converted) * 100 : 0,
+      touchRate: leads ? (touched / leads) * 100 : 0,
+      avgFups: leads ? fups / leads : 0,
+      revPerLead: leads ? revenue / leads : 0,
+      avgDeal: converted ? revenue / converted : 0,
+      medianDaysToConvert: median(convDays),
+      medianDaysToFirstTouch: median(touchDays),
+      share: rows.length ? (leads / rows.length) * 100 : 0,
+      months,
+      topSource: topKey(sources),
+      topCentre: topKey(centres),
+    });
+  });
+
+  return out.sort((a, b) => b.leads - a.leads);
+}
+
+/** Percentile rank of a value inside a cohort, 0–100. Higher = better. */
+export function rankPct(values: number[], v: number): number {
+  if (values.length < 2) return 100;
+  const below = values.filter((x) => x < v).length;
+  return (below / (values.length - 1)) * 100;
+}

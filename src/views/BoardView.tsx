@@ -45,7 +45,7 @@ export function BoardView() {
     <div className="mx-auto max-w-[1560px] px-3 pb-10 pt-4 sm:px-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="font-display text-[15px] font-semibold text-white">Pipeline board</h2>
+          <h2 className="font-display text-[15px] font-semibold text-mist-100">Pipeline board</h2>
           <p className="text-[11.5px] text-mist-500">{fmt.int(filtered.length)} leads arranged by {FIELD_META[field].label.toLowerCase()} · newest first</p>
         </div>
         <Segmented
@@ -67,7 +67,7 @@ export function BoardView() {
                 <header className="border-b border-line-soft px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full" style={{ background: colorOf(col.key) }} />
-                    <span className="min-w-0 flex-1 truncate font-display text-[12.5px] font-semibold text-white" title={col.key}>
+                    <span className="min-w-0 flex-1 truncate font-display text-[12.5px] font-semibold text-mist-100" title={col.key}>
                       {field === "channel" ? shortChannel(col.key) : field === "center" ? shortCenter(col.key) : col.key}
                     </span>
                     <span className="tnum rounded bg-ink-750 px-1.5 py-px text-[10px] text-mist-300">{fmt.compact(col.agg.total)}</span>
@@ -87,7 +87,7 @@ export function BoardView() {
                     >
                       <div className="flex items-center gap-2">
                         <Avatar name={l.name} size={22} />
-                        <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-mist-100 group-hover:text-white">{l.name}</p>
+                        <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-mist-100 group-hover:text-mist-100">{l.name}</p>
                         <span className="tnum shrink-0 text-[9.5px] text-mist-600">{fmt.daysAgo(l.created)}</span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">

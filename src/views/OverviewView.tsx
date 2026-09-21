@@ -39,8 +39,8 @@ function Leaderboard({
           {mode !== "conv" && <Avatar name={r.key} size={24} />}
           <span className="min-w-0 flex-1">
             <span className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-[12.5px] font-medium text-mist-200 group-hover:text-white">{r.key}</span>
-              <span className="tnum shrink-0 text-[11.5px] font-semibold text-white">
+              <span className="truncate text-[12.5px] font-medium text-mist-200 group-hover:text-mist-100">{r.key}</span>
+              <span className="tnum shrink-0 text-[11.5px] font-semibold text-mist-100">
                 {mode === "ltv" ? fmt.inrC(r.ltv) : mode === "conv" ? fmt.pct(r.convRate) : fmt.compact(r.total)}
               </span>
             </span>
@@ -114,7 +114,7 @@ export function OverviewView() {
           {bestChannel && (
             <p className="text-[12px] text-mist-300">
               <span className="text-mist-500">Best converting channel:</span>{" "}
-              <button onClick={() => goChannel(bestChannel.key)} className="font-semibold text-white underline decoration-sky-400/40 decoration-dotted underline-offset-4 hover:text-sky-400">
+              <button onClick={() => goChannel(bestChannel.key)} className="font-semibold text-mist-100 underline decoration-sky-400/40 decoration-dotted underline-offset-4 hover:text-sky-400">
                 {shortChannel(bestChannel.key)}
               </button>{" "}
               <span className="tnum text-mint-400">{fmt.pct(bestChannel.convRate)}</span>
@@ -123,7 +123,7 @@ export function OverviewView() {
           {bestAssoc && (
             <p className="text-[12px] text-mist-300">
               <span className="text-mist-500">Top associate:</span>{" "}
-              <button onClick={() => goAssoc(bestAssoc.key)} className="font-semibold text-white underline decoration-ember-400/40 decoration-dotted underline-offset-4 hover:text-ember-400">
+              <button onClick={() => goAssoc(bestAssoc.key)} className="font-semibold text-mist-100 underline decoration-ember-400/40 decoration-dotted underline-offset-4 hover:text-ember-400">
                 {bestAssoc.key}
               </button>{" "}
               <span className="tnum text-mint-400">{fmt.pct(bestAssoc.convRate)}</span> on {fmt.int(bestAssoc.total)} leads
@@ -131,7 +131,7 @@ export function OverviewView() {
           )}
           {busyDow && (
             <p className="text-[12px] text-mist-300">
-              <span className="text-mist-500">Peak intake day:</span> <span className="font-semibold text-white">{busyDow.d}</span>{" "}
+              <span className="text-mist-500">Peak intake day:</span> <span className="font-semibold text-mist-100">{busyDow.d}</span>{" "}
               <span className="tnum text-mist-400">{fmt.compact(busyDow.leads)} leads</span>
             </p>
           )}
@@ -170,7 +170,7 @@ export function OverviewView() {
                   className="group flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-ink-850"
                 >
                   <span className="size-2 shrink-0 rounded-full" style={{ background: statusColor(s.key) }} />
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-mist-300 group-hover:text-white">{s.key}</span>
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-mist-300 group-hover:text-mist-100">{s.key}</span>
                   <span className="tnum text-[11px] text-mist-500">{fmt.compact(s.total)}</span>
                   <span className="tnum w-11 text-right text-[11px] text-mist-400">{fmt.pct((s.total / (kpis.total || 1)) * 100, 0)}</span>
                 </button>
@@ -241,7 +241,7 @@ export function OverviewView() {
                         <span className="flex items-center gap-2.5">
                           <span className={cnRank(i)}>{i + 1}</span>
                           <Avatar name={a.key} size={24} />
-                          <span className="text-[12.5px] font-medium text-mist-200 group-hover:text-white">{a.key}</span>
+                          <span className="text-[12.5px] font-medium text-mist-200 group-hover:text-mist-100">{a.key}</span>
                           {i === 0 && <Trophy className="size-3.5 text-gold-400" />}
                         </span>
                       </td>

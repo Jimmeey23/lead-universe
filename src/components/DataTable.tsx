@@ -128,10 +128,10 @@ function GroupHead({
     <tr>
       <td colSpan={colSpan} className={cn("border-b border-line-soft bg-ink-850/70", compact ? "py-0.5" : "py-1")}>
         <button onClick={onToggle} className="group flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 text-left">
-          <span className="flex size-5 items-center justify-center rounded-md border border-line bg-ink-800 text-mist-400 transition-colors group-hover:text-white">
+          <span className="flex size-5 items-center justify-center rounded-md border border-line bg-ink-800 text-mist-400 transition-colors group-hover:text-mist-100">
             {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
           </span>
-          <span className="font-display text-[12.5px] font-semibold text-white">{g.label}</span>
+          <span className="font-display text-[12.5px] font-semibold text-mist-100">{g.label}</span>
           <span className="tnum rounded bg-ink-750 px-1.5 py-px text-[10px] text-mist-400">{fmt.int(g.total)} leads</span>
           <span className="hidden items-center gap-2 sm:flex">
             <span className="flex w-24 items-center gap-1.5">
@@ -289,7 +289,7 @@ export function DataTable({
           >
             {c.label}
             {active ? (active.dir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />) : <ArrowUpDown className="size-3 opacity-0 transition-opacity group-hover:opacity-50" />}
-            {ord !== null && <span className="rounded bg-ember-500 px-1 text-[9px] text-ink-950">{ord}</span>}
+            {ord !== null && <span className="rounded bg-ember-500 px-1 text-[9px] text-onaccent">{ord}</span>}
           </button>
         ) : (
           <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-mist-500">{c.label}</span>
@@ -312,7 +312,7 @@ export function DataTable({
             <Avatar name={l.name} size={compact ? 24 : 28} />
           )}
           <div className="min-w-0">
-            <p className="truncate text-[12.5px] font-medium text-mist-100 transition-colors group-hover:text-white">
+            <p className="truncate text-[12.5px] font-medium text-mist-100 transition-colors group-hover:text-mist-100">
               {l.name}
             </p>
             <p className="tnum truncate text-[10.5px] text-mist-600">
@@ -395,7 +395,7 @@ export function DataTable({
       {!groups && sorted.length > limit && (
         <button
           onClick={() => setLimit((n) => n + PAGE * 2)}
-          className="flex w-full items-center justify-center gap-2 border-t border-line-soft py-3 text-[12px] font-medium text-mist-400 transition-colors hover:bg-ink-850 hover:text-white"
+          className="flex w-full items-center justify-center gap-2 border-t border-line-soft py-3 text-[12px] font-medium text-mist-400 transition-colors hover:bg-ink-850 hover:text-mist-100"
         >
           <Download className="size-3.5 rotate-180" />
           Load more — showing {fmt.int(limit)} of {fmt.int(sorted.length)}

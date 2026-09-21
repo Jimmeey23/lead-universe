@@ -99,7 +99,7 @@ export function StudiosView() {
                         <span className={cn("flex size-6 items-center justify-center rounded-md border", active ? "border-ember-500/50 bg-ember-500/10 text-ember-400" : "border-line bg-ink-850 text-mist-500")}>
                           <Building2 className="size-3" />
                         </span>
-                        <span className={cn("text-[12.5px] font-medium", active ? "text-white" : "text-mist-200")}>{shortCenter(c.key)}</span>
+                        <span className={cn("text-[12.5px] font-medium", active ? "text-mist-100" : "text-mist-200")}>{shortCenter(c.key)}</span>
                         {byCenter[0]?.key === c.key && <Crown className="size-3 text-gold-400" />}
                       </span>
                     </td>
@@ -133,7 +133,7 @@ export function StudiosView() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ember-400">Studio dossier</p>
-            <h2 className="mt-1 font-display text-[22px] font-semibold text-white">{current}</h2>
+            <h2 className="mt-1 font-display text-[22px] font-semibold text-mist-100">{current}</h2>
             <p className="mt-0.5 text-[12px] text-mist-500">
               {curAgg && <>Ranked #{sorted.findIndex((c) => c.key === current) + 1} of {byCenter.length} by {METRIC_META[metric].label.toLowerCase()} · </>}
               {fmt.int(kpis.total)} leads in current selection
@@ -141,7 +141,7 @@ export function StudiosView() {
           </div>
           <button
             onClick={() => { setFilters((f) => ({ ...f, centers: [current] })); setView("explorer"); }}
-            className="flex items-center gap-1.5 rounded-lg border border-ember-500/40 bg-ember-950 px-3 py-2 text-[12px] font-medium text-ember-300 transition-colors hover:bg-ember-500 hover:text-ink-950"
+            className="flex items-center gap-1.5 rounded-lg border border-ember-500/40 bg-ember-950 px-3 py-2 text-[12px] font-medium text-ember-300 transition-colors hover:bg-ember-500 hover:text-onaccent"
           >
             Open {fmt.compact(kpis.total)} leads <ArrowUpRight className="size-3.5" />
           </button>
@@ -231,7 +231,7 @@ export function StudiosView() {
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-[12px] font-medium text-mist-200">{a.key}</span>
-                    <span className="tnum text-[11px] font-semibold text-white">
+                    <span className="tnum text-[11px] font-semibold text-mist-100">
                       {asTab === "conv" ? fmt.pct(a.convRate) : fmt.inrC(a.ltv)}
                     </span>
                   </span>

@@ -47,7 +47,7 @@ function GroupSelect({ value, onChange }: { value: GroupKey; onChange: (v: Group
                 onClick={() => { onChange(k); setOpen(false); }}
                 className={cn(
                   "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-[12px]",
-                  k === value ? "bg-ink-700 text-white" : "text-mist-300 hover:bg-ink-750",
+                  k === value ? "bg-ink-700 text-mist-100" : "text-mist-300 hover:bg-ink-750",
                 )}
               >
                 {GROUP_META[k].label}
@@ -77,12 +77,12 @@ function LeadCard({ lead, i }: { lead: Lead; i: number }) {
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={lead.name} size={32} />
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold text-mist-100 group-hover:text-white">{lead.name}</p>
+            <p className="truncate text-[13px] font-semibold text-mist-100 group-hover:text-mist-100">{lead.name}</p>
             <p className="tnum truncate text-[10px] text-mist-600">#{lead.id} · {fmt.date(lead.created)}</p>
           </div>
         </div>
         <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-ink-950"
+          className="shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-onaccent"
           style={{ background: statusColor(lead.status) }}
         >
           {lead.status}
@@ -94,7 +94,7 @@ function LeadCard({ lead, i }: { lead: Lead; i: number }) {
         <span className="rounded-md border border-line-soft bg-ink-850 px-1.5 py-0.5 text-[10px] text-mist-400">{lead.source}</span>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-line-soft pt-2.5">
-        <span className="tnum text-[12px] font-semibold text-white">{lead.ltv ? fmt.inrC(lead.ltv) : "—"}</span>
+        <span className="tnum text-[12px] font-semibold text-mist-100">{lead.ltv ? fmt.inrC(lead.ltv) : "—"}</span>
         <span className="flex items-center gap-2.5 text-[10.5px] text-mist-500">
           <span className="flex items-center gap-1"><MessagesSquare className="size-3 text-ember-400/80" />{lead.fupCount}</span>
           <span className="flex items-center gap-1"><Footprints className="size-3 text-violet-400/80" />{lead.visits}</span>

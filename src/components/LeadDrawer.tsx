@@ -3,10 +3,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   X, Phone, Mail, BadgeCheck, CalendarDays, Store, Megaphone, Share2, UserRound,
   Layers, MessagesSquare, Wallet, Footprints, ShoppingBag, StickyNote, Hash, GitBranch, Check,
+  Receipt, Dumbbell, Ban, CircleSlash,
 } from "lucide-react";
 import { useApp } from "../state/app";
 import { Avatar } from "./ui";
-import { fmt, statusColor, stagePhase, PHASE_META, shortCenter, Lead } from "../lib/data";
+import { fmt, statusColor, stagePhase, PHASE_META, shortCenter, Lead, Sale, Visit } from "../lib/data";
 import { cn } from "../utils/cn";
 
 const PHASE_RAIL = ["Prospect", "Engagement", "Trial", "Decision", "Won"] as const;
@@ -25,12 +26,13 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
   );
 }
 
-function Flag({ on, label, color }: { on: boolean; label: string; color: string }) {
+function Flag({ on, label, color, hint }: { on: boolean; label: string; color: string; hint?: string }) {
   return (
     <span
+      title={hint}
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium",
-        on ? "text-white" : "border-line text-mist-600",
+        on ? "text-mist-100" : "border-line text-mist-600",
       )}
       style={on ? { background: color + "26", borderColor: color + "55" } : undefined}
     >
@@ -65,7 +67,7 @@ function Body({ lead }: { lead: Lead }) {
                       boxShadow: current ? `0 0 10px ${color}66` : undefined,
                     }}
                   >
-                    {reached && <Check className="size-2.5 text-ink-950" strokeWidth={4} />}
+                    {reached && <Check className="size-2.5 text-onaccent" strokeWidth={4} />}
                   </span>
                   <span className={cn("text-[8.5px] font-medium", reached ? "text-mist-300" : "text-mist-600")}>{p}</span>
                 </div>
@@ -95,17 +97,27 @@ function Body({ lead }: { lead: Lead }) {
             <span className="mx-auto mb-1 flex size-6 items-center justify-center rounded-md" style={{ color: k.tone, background: k.tone + "14" }}>
               {k.icon}
             </span>
-            <p className="tnum text-[13px] font-semibold text-white">{k.value}</p>
+            <p className="tnum text-[13px] font-semibold text-mist-100">{k.value}</p>
             <p className="mt-0.5 text-[9px] uppercase tracking-wider text-mist-600">{k.label}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        <Flag on={lead.trialed} label="Trial completed" color="#a78bfa" />
-        <Flag on={lead.conv} label="Converted" color="#34d399" />
+        <Flag
+          on={lead.trialed}
+          label="Trial completed"
+          color="#a78bfa"
+          hint={lead.trialed ? `Attended a class on ${fmt.date(lead.trialDate)} — from the Bookings sheet` : "No class attended after the enquiry date"}
+        />
+        <Flag
+          on={lead.conv}
+          label="Converted"
+          color="#34d399"
+          hint={lead.conv ? `Bought ${lead.sales.find((s) => s.converting && s.postLead)?.product} on ${fmt.date(lead.firstSaleDate)}` : "No qualifying purchase after the enquiry date (intro offers, retail and credits do not count)"}
+        />
         <Flag on={lead.retained} label="Retained" color="#a3e635" />
-        <Flag on={lead.ltv > 0} label="Paying" color="#fbbf24" />
+        <Flag on={lead.ltv > 0} label="Paying" color="#fbbf24" hint={`${fmt.inr(lead.ltv)} spent after the enquiry`} />
       </div>
 
       <div className="mt-4 divide-y divide-line-soft rounded-xl border border-line-soft bg-ink-850/40 px-3.5">
@@ -158,7 +170,7 @@ function Body({ lead }: { lead: Lead }) {
           <ol className="relative ml-1.5 space-y-3 border-l border-line pl-4">
             {lead.fups.map((fu, i) => (
               <li key={i} className="relative">
-                <span className="absolute -left-[21px] top-1 size-2.5 rounded-full border-2 border-ink-950 bg-ember-500" />
+                <span className="absolute -left-[21px] top-1 size-2.5 rounded-full border-2 border-ink-900 bg-ember-500" />
                 <p className="tnum text-[10.5px] font-medium text-mist-500">#{i + 1} · {fmt.date(fu.d)}</p>
                 {fu.c && <p className="mt-0.5 text-[12px] leading-relaxed text-mist-300">{fu.c}</p>}
               </li>
@@ -166,6 +178,162 @@ function Body({ lead }: { lead: Lead }) {
           </ol>
         </div>
       )}
+
+      <SalesHistory lead={lead} />
+      <VisitHistory lead={lead} />
+    </div>
+  );
+}
+
+/* ───────────────────── Purchase history (Sales sheet) ──────────────── */
+
+function SaleLine({ s, created }: { s: Sale; created: string }) {
+  const pre = !s.postLead;
+  return (
+    <li className="relative">
+      <span
+        className={cn("absolute -left-[21px] top-1.5 size-2.5 rounded-full border-2 border-ink-900")}
+        style={{ background: s.converting && !pre ? "#34d399" : pre ? "#3f444e" : "#fbbf24" }}
+      />
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="truncate text-[12px] font-medium text-mist-200">{s.product}</p>
+        <span className="tnum shrink-0 text-[11.5px] font-semibold text-gold-400">{fmt.inr(s.value)}</span>
+      </div>
+      <p className="tnum mt-0.5 text-[10.5px] text-mist-500">
+        {fmt.date(s.date)} · {s.category}
+        {s.location && s.location !== "—" && <> · {shortCenter(s.location)}</>}
+        {s.soldBy && s.soldBy !== "—" && <> · {s.soldBy}</>}
+      </p>
+      {s.membership && s.membership !== "—" && (
+        <p className="mt-0.5 text-[10.5px] text-mist-600">Membership · {s.membership}</p>
+      )}
+      <div className="mt-1 flex flex-wrap gap-1">
+        {pre ? (
+          <Tag color="#71717a" icon={<CircleSlash className="size-2.5" />} label={`before enquiry (${fmt.date(created)})`} />
+        ) : s.converting ? (
+          <Tag color="#34d399" icon={<BadgeCheck className="size-2.5" />} label="counts as conversion" />
+        ) : (
+          <Tag color="#fbbf24" icon={<Ban className="size-2.5" />} label="excluded — intro / retail / credits" />
+        )}
+      </div>
+    </li>
+  );
+}
+
+function Tag({ color, icon, label }: { color: string; icon: React.ReactNode; label: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded px-1.5 py-px text-[9.5px] font-medium"
+      style={{ background: color + "1f", color }}
+    >
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function SalesHistory({ lead }: { lead: Lead }) {
+  if (!lead.sales.length) {
+    return (
+      <Empty
+        icon={<Receipt className="size-3" />}
+        title="Purchase history"
+        note={lead.email || lead.memberId ? "No sales matched this lead in the Sales sheet." : "No email or member ID to match against the Sales sheet."}
+      />
+    );
+  }
+  const converting = lead.sales.filter((s) => s.converting && s.postLead).length;
+  return (
+    <div className="mt-4">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-mist-600">
+        <Receipt className="size-3" /> Purchase history ·{" "}
+        <span className="tnum text-ember-400">{lead.sales.length}</span>
+        <span className="ml-auto normal-case tracking-normal text-mist-500">
+          {converting} qualifying · {fmt.inr(lead.totalSpend)} lifetime
+        </span>
+      </p>
+      <ol className="relative ml-1.5 space-y-3 border-l border-line pl-4">
+        {lead.sales.map((s, i) => (
+          <SaleLine key={i} s={s} created={lead.created} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/* ───────────────────── Visit history (Bookings sheet) ──────────────── */
+
+function visitTone(v: Visit) {
+  if (v.attended) return { c: "#a78bfa", t: "Attended" };
+  if (v.noShow) return { c: "#fb7185", t: "No show" };
+  if (v.lateCancelled) return { c: "#f97316", t: "Late cancelled" };
+  if (v.cancelled) return { c: "#71717a", t: "Cancelled" };
+  return { c: "#52525b", t: "Not attended" };
+}
+
+function VisitHistory({ lead }: { lead: Lead }) {
+  if (!lead.visitLog.length) {
+    return (
+      <Empty
+        icon={<Dumbbell className="size-3" />}
+        title="Visit history"
+        note="No bookings matched this lead in the Bookings sheet."
+      />
+    );
+  }
+  // newest first — recency is what a caller needs on the phone
+  const rows = [...lead.visitLog].reverse();
+  return (
+    <div className="mt-4">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-mist-600">
+        <Dumbbell className="size-3" /> Visit history ·{" "}
+        <span className="tnum text-ember-400">{lead.visitLog.length}</span>
+        <span className="ml-auto normal-case tracking-normal text-mist-500">
+          {lead.visits} attended after enquiry
+          {lead.lastVisit && <> · last {fmt.daysAgo(lead.lastVisit)}</>}
+        </span>
+      </p>
+      <ol className="max-h-[420px] space-y-1.5 overflow-y-auto pr-1">
+        {rows.map((v, i) => {
+          const tone = visitTone(v);
+          return (
+            <li
+              key={i}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg border border-line-soft bg-ink-850/40 px-2.5 py-1.5",
+                !v.postLead && "opacity-55",
+              )}
+            >
+              <span className="size-1.5 shrink-0 rounded-full" style={{ background: tone.c }} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11.5px] font-medium text-mist-200">{v.cls}</p>
+                <p className="tnum truncate text-[10px] text-mist-600">
+                  {fmt.date(v.date)}
+                  {v.teacher && v.teacher !== "—" && <> · {v.teacher}</>}
+                  {v.location && v.location !== "—" && <> · {shortCenter(v.location)}</>}
+                </p>
+              </div>
+              <span className="shrink-0 text-[9.5px] font-medium" style={{ color: tone.c }}>
+                {tone.t}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-1.5 text-[9.5px] text-mist-600">
+        Faded rows pre-date the enquiry on {fmt.date(lead.created)} and are ignored by the badges.
+      </p>
+    </div>
+  );
+}
+
+function Empty({ icon, title, note }: { icon: React.ReactNode; title: string; note: string }) {
+  return (
+    <div className="mt-4">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-mist-600">
+        {icon} {title}
+      </p>
+      <p className="rounded-xl border border-dashed border-line-soft px-3.5 py-3 text-[11.5px] text-mist-600">{note}</p>
     </div>
   );
 }
@@ -184,7 +352,7 @@ export function LeadDrawer() {
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-ink-950/70 backdrop-blur-[2px]"
+            className="scrim fixed inset-0 z-50 backdrop-blur-[2px]"
             onClick={() => openLead(null)}
           />
           <motion.aside
@@ -197,7 +365,7 @@ export function LeadDrawer() {
                 <div className="flex items-center gap-3">
                   <Avatar name={lead.name} size={44} />
                   <div>
-                    <h2 className="font-display text-[17px] font-semibold leading-tight text-white">{lead.name}</h2>
+                    <h2 className="font-display text-[17px] font-semibold leading-tight text-mist-100">{lead.name}</h2>
                     <p className="tnum mt-0.5 text-[11px] text-mist-500">
                       #{lead.id} · {shortCenter(lead.center)}
                     </p>
@@ -205,14 +373,14 @@ export function LeadDrawer() {
                 </div>
                 <button
                   onClick={() => openLead(null)}
-                  className="flex size-8 items-center justify-center rounded-lg border border-line text-mist-400 transition-colors hover:bg-ink-800 hover:text-white"
+                  className="flex size-8 items-center justify-center rounded-lg border border-line text-mist-400 transition-colors hover:bg-ink-800 hover:text-mist-100"
                 >
                   <X className="size-4" />
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-ink-950"
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-onaccent"
                   style={{ background: statusColor(lead.status) }}
                 >
                   {lead.status}

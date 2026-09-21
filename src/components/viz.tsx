@@ -43,7 +43,7 @@ export function Kpi({
         </span>
       </div>
       <div className="mt-2 flex items-end justify-between gap-2">
-        <p className="tnum font-display text-[26px] font-semibold leading-none tracking-tight text-white">{value}</p>
+        <p className="tnum font-display text-[26px] font-semibold leading-none tracking-tight text-mist-100">{value}</p>
         {spark && spark.length > 1 && <Spark data={spark} tone={tone} />}
       </div>
       {sub && <div className="mt-2 text-[11px] leading-snug text-mist-500">{sub}</div>}
@@ -109,7 +109,7 @@ export function Funnel({ steps, onSelect }: { steps: FunnelStep[]; onSelect?: (l
                 className="absolute inset-y-0 left-0 rounded-md"
                 style={{ background: `linear-gradient(90deg, ${s.color}33, ${s.color})`, boxShadow: `0 0 18px ${s.color}30 inset` }}
               />
-              <span className="tnum absolute inset-y-0 left-2.5 flex items-center text-[11px] font-semibold text-white/95 mix-blend-plus-lighter">
+              <span className="tnum absolute inset-y-0 left-2.5 flex items-center text-[11px] font-semibold text-mist-100/95 mix-blend-plus-lighter">
                 {fmt.compact(s.count)}
               </span>
             </div>
@@ -129,11 +129,11 @@ export function Funnel({ steps, onSelect }: { steps: FunnelStep[]; onSelect?: (l
 /* ────────────────────────── Trend chart ─────────────────────────── */
 
 const tooltipStyle: React.CSSProperties = {
-  background: "#15171d",
-  border: "1px solid #2c303a",
+  background: "var(--color-ink-850)",
+  border: "1px solid var(--color-line)",
   borderRadius: 10,
   fontSize: 11.5,
-  boxShadow: "0 12px 32px rgba(0,0,0,.55)",
+  boxShadow: "var(--shadow-panel)",
   padding: "8px 10px",
 };
 
@@ -210,7 +210,7 @@ export function Donut({
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="tnum font-display text-[22px] font-semibold text-white">{centerValue}</span>
+        <span className="tnum font-display text-[22px] font-semibold text-mist-100">{centerValue}</span>
         <span className="text-[10px] uppercase tracking-[0.16em] text-mist-500">{centerLabel}</span>
       </div>
     </div>
@@ -228,7 +228,7 @@ export function ChannelMatrix({ rows, maxTotal, onSelect }: { rows: Agg[]; maxTo
           onClick={() => onSelect?.(r.key)}
           className="group grid w-full grid-cols-[minmax(120px,180px)_1fr_auto] items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-ink-850 sm:grid-cols-[180px_1fr_160px]"
         >
-          <span className="truncate text-[12px] font-medium text-mist-300 group-hover:text-white" title={r.key}>
+          <span className="truncate text-[12px] font-medium text-mist-300 group-hover:text-mist-100" title={r.key}>
             {shortChannel(r.key)}
           </span>
           <div className="relative h-[22px] overflow-hidden rounded-md bg-ink-850/80">
@@ -246,7 +246,7 @@ export function ChannelMatrix({ rows, maxTotal, onSelect }: { rows: Agg[]; maxTo
               className="absolute inset-0 rounded-md"
               style={{ background: "#34d399" }}
             />
-            <span className="tnum absolute inset-y-0 left-2 flex items-center text-[10.5px] font-semibold text-white">
+            <span className="tnum absolute inset-y-0 left-2 flex items-center text-[10.5px] font-semibold text-mist-100">
               {fmt.compact(r.total)}
             </span>
           </div>
