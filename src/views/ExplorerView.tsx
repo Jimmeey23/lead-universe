@@ -8,7 +8,7 @@ import {
   DataTable, ColumnsMenu, SortSpec, SortKey, GroupKey, GROUP_META, ColId, ALL_COLS, sortLeads, exportCsv,
 } from "../components/DataTable";
 import { Segmented, Avatar, useClickOutside, EmptyState, Panel } from "../components/ui";
-import { fmt, statusColor, shortCenter, Lead, initials } from "../lib/data";
+import { fmt, statusColor, shortCenter, Lead, initials, tint } from "../lib/data";
 import { cn } from "../utils/cn";
 import { UserRoundSearch } from "lucide-react";
 
@@ -82,8 +82,12 @@ function LeadCard({ lead, i }: { lead: Lead; i: number }) {
           </div>
         </div>
         <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-onaccent"
-          style={{ background: statusColor(lead.status) }}
+          className="shrink-0 rounded-full border px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide"
+          style={{
+            background: tint(statusColor(lead.status), 15),
+            borderColor: tint(statusColor(lead.status), 40),
+            color: statusColor(lead.status),
+          }}
         >
           {lead.status}
         </span>

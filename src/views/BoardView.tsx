@@ -39,7 +39,7 @@ export function BoardView() {
   }, [filtered, field]);
 
   const colorOf = (key: string) =>
-    field === "status" ? statusColor(key) : field === "phase" ? PHASE_META[key as keyof typeof PHASE_META]?.color ?? "#8b8f9a" : "var(--color-ember-500)";
+    field === "status" ? statusColor(key) : field === "phase" ? PHASE_META[key as keyof typeof PHASE_META]?.color ?? "var(--color-mist-500)" : "var(--color-ember-500)";
 
   return (
     <div className="mx-auto max-w-[1560px] px-3 pb-10 pt-4 sm:px-5">

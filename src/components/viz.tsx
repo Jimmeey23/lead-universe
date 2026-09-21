@@ -6,13 +6,13 @@ import {
 } from "recharts";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "../utils/cn";
-import { fmt, statusColor, shortChannel } from "../lib/data";
+import { fmt, statusColor, shortChannel , tint } from "../lib/data";
 import { FunnelStep, MonthPoint, Agg } from "../lib/stats";
 
 /* ─────────────────────────── KPI Card ───────────────────────────── */
 
 export function Kpi({
-  label, value, sub, icon, tone = "#ff6b47", spark, delay = 0,
+  label, value, sub, icon, tone = "var(--color-ember-500)", spark, delay = 0,
 }: {
   label: string;
   value: string;
@@ -37,7 +37,7 @@ export function Kpi({
         <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-mist-500">{label}</span>
         <span
           className="flex size-7 items-center justify-center rounded-lg border border-line-soft"
-          style={{ color: tone, background: tone + "14" }}
+          style={{ color: tone, background: tint(tone, 12) }}
         >
           {icon}
         </span>
@@ -51,7 +51,7 @@ export function Kpi({
   );
 }
 
-export function Spark({ data, tone = "#ff6b47", w = 84, h = 26 }: { data: number[]; tone?: string; w?: number; h?: number }) {
+export function Spark({ data, tone = "var(--color-ember-500)", w = 84, h = 26 }: { data: number[]; tone?: string; w?: number; h?: number }) {
   const { line, area } = useMemo(() => {
     const max = Math.max(...data, 1);
     const min = Math.min(...data, 0);
@@ -107,9 +107,12 @@ export function Funnel({ steps, onSelect }: { steps: FunnelStep[]; onSelect?: (l
                 animate={{ width: `${Math.max(2.5, (s.count / max) * 100)}%` }}
                 transition={{ duration: 0.7, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute inset-y-0 left-0 rounded-md"
-                style={{ background: `linear-gradient(90deg, ${s.color}33, ${s.color})`, boxShadow: `0 0 18px ${s.color}30 inset` }}
+                style={{
+                  background: `linear-gradient(90deg, ${tint(s.color, 45)}, ${s.color})`,
+                  boxShadow: `0 0 18px ${tint(s.color, 20)} inset`,
+                }}
               />
-              <span className="tnum absolute inset-y-0 left-2.5 flex items-center text-[11px] font-semibold text-mist-100/95 mix-blend-plus-lighter">
+              <span className="on-bar tnum absolute inset-y-0 left-2.5 flex items-center text-[11px] font-semibold text-mist-100">
                 {fmt.compact(s.count)}
               </span>
             </div>
@@ -117,7 +120,7 @@ export function Funnel({ steps, onSelect }: { steps: FunnelStep[]; onSelect?: (l
           </button>
           {i < steps.length - 1 && (
             <div className="ml-[120px] flex w-fit items-center gap-1 rounded-full border border-line-soft bg-ink-900 px-1.5 py-px">
-              <span className="tnum text-[9.5px] text-mist-600">▼ {fmt.pct(steps[i + 1].stepRate, 0)}</span>
+              <span className="tnum text-[9.5px] text-mist-500">▼ {fmt.pct(steps[i + 1].stepRate, 0)}</span>
             </div>
           )}
         </div>
@@ -144,8 +147,8 @@ export function TrendChart({ data, height = 250 }: { data: MonthPoint[]; height?
       <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} barCategoryGap="20%">
         <defs>
           <linearGradient id={`${id}-leads`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ff6b47" stopOpacity={0.32} />
-            <stop offset="100%" stopColor="#ff6b47" stopOpacity={0} />
+            <stop offset="0%" stopColor="var(--color-ember-500)" stopOpacity={0.32} />
+            <stop offset="100%" stopColor="var(--color-ember-500)" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid vertical={false} strokeDasharray="0" />
@@ -160,14 +163,14 @@ export function TrendChart({ data, height = 250 }: { data: MonthPoint[]; height?
         <YAxis hide domain={[0, "dataMax + 120"]} />
         <Tooltip
           contentStyle={tooltipStyle}
-          labelStyle={{ color: "#f3f3f5", fontFamily: "Space Grotesk", fontWeight: 600, marginBottom: 4 }}
+          labelStyle={{ color: "var(--color-mist-100)", fontFamily: "Space Grotesk", fontWeight: 600, marginBottom: 4 }}
           labelFormatter={(m) => fmt.month(String(m))}
           formatter={(v: any, name: any) => [fmt.int(Number(v)), name]}
           itemStyle={{ padding: 0 }}
         />
-        <Area type="monotone" dataKey="leads" name="Leads in" stroke="#ff6b47" strokeWidth={2} fill={`url(#${id}-leads)`} dot={false} activeDot={{ r: 3.5 }} />
-        <Line type="monotone" dataKey="trialed" name="Trials" stroke="#a78bfa" strokeWidth={1.6} dot={false} strokeDasharray="4 3" />
-        <Line type="monotone" dataKey="won" name="Won" stroke="#34d399" strokeWidth={1.8} dot={false} />
+        <Area type="monotone" dataKey="leads" name="Leads in" stroke="var(--color-ember-500)" strokeWidth={2} fill={`url(#${id}-leads)`} dot={false} activeDot={{ r: 3.5 }} />
+        <Line type="monotone" dataKey="trialed" name="Trials" stroke="var(--color-violet-400)" strokeWidth={1.6} dot={false} strokeDasharray="4 3" />
+        <Line type="monotone" dataKey="won" name="Won" stroke="var(--color-mint-400)" strokeWidth={1.8} dot={false} />
       </ComposedChart>
     </ResponsiveContainer>
   );
@@ -237,14 +240,14 @@ export function ChannelMatrix({ rows, maxTotal, onSelect }: { rows: Agg[]; maxTo
               animate={{ width: `${(r.total / maxTotal) * 100}%` }}
               transition={{ duration: 0.6, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0 rounded-md opacity-90"
-              style={{ background: "linear-gradient(90deg,#38bdf822,#38bdf8)" }}
+              style={{ background: `linear-gradient(90deg, ${tint("var(--color-sky-400)", 30)}, var(--color-sky-400))` }}
             />
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(r.won / maxTotal) * 100}%` }}
               transition={{ duration: 0.6, delay: 0.15 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0 rounded-md"
-              style={{ background: "#34d399" }}
+              style={{ background: "var(--color-mint-400)" }}
             />
             <span className="tnum absolute inset-y-0 left-2 flex items-center text-[10.5px] font-semibold text-mist-100">
               {fmt.compact(r.total)}

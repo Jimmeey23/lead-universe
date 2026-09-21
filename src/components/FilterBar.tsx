@@ -131,10 +131,10 @@ export function FilterBar() {
           <div className="hidden h-5 w-px bg-line-soft lg:block" />
 
           {/* outcome flags */}
-          <FlagToggle label="Tried" value={f.trialed} onChange={(v) => setFilters((x) => ({ ...x, trialed: v }))} onColor="#a78bfa" />
+          <FlagToggle label="Tried" value={f.trialed} onChange={(v) => setFilters((x) => ({ ...x, trialed: v }))} onColor="var(--color-violet-400)" />
           <FlagToggle label="Won" value={f.conv} onChange={(v) => setFilters((x) => ({ ...x, conv: v }))} />
-          <FlagToggle label="Retained" value={f.retained} onChange={(v) => setFilters((x) => ({ ...x, retained: v }))} onColor="#a3e635" />
-          <FlagToggle label="Paying" value={f.hasLtv} onChange={(v) => setFilters((x) => ({ ...x, hasLtv: v }))} onColor="#fbbf24" />
+          <FlagToggle label="Retained" value={f.retained} onChange={(v) => setFilters((x) => ({ ...x, retained: v }))} onColor="var(--color-lime-400)" />
+          <FlagToggle label="Paying" value={f.hasLtv} onChange={(v) => setFilters((x) => ({ ...x, hasLtv: v }))} onColor="var(--color-gold-400)" />
 
           <div className="ml-auto flex items-center gap-2">
             {nActive > 0 && (

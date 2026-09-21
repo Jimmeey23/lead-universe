@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../state/app";
 import { Avatar } from "./ui";
-import { fmt, statusColor, stagePhase, PHASE_META, shortCenter, Lead, Sale, Visit } from "../lib/data";
+import { fmt, statusColor, stagePhase, PHASE_META, shortCenter, tint, Lead, Sale, Visit } from "../lib/data";
 import { cn } from "../utils/cn";
 
 const PHASE_RAIL = ["Prospect", "Engagement", "Trial", "Decision", "Won"] as const;
@@ -34,9 +34,9 @@ function Flag({ on, label, color, hint }: { on: boolean; label: string; color: s
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium",
         on ? "text-mist-100" : "border-line text-mist-600",
       )}
-      style={on ? { background: color + "26", borderColor: color + "55" } : undefined}
+      style={on ? { background: tint(color, 18), borderColor: tint(color, 45), color } : undefined}
     >
-      <span className="size-1 rounded-full" style={{ background: on ? color : "#3f444e" }} />
+      <span className="size-1 rounded-full" style={{ background: on ? color : "var(--color-line-strong)" }} />
       {label}
     </span>
   );
@@ -62,17 +62,17 @@ function Body({ lead }: { lead: Lead }) {
                   <span
                     className={cn("flex size-4 items-center justify-center rounded-full border-2 transition-all", current && "scale-110")}
                     style={{
-                      borderColor: reached ? color : "#2c303a",
+                      borderColor: reached ? color : "var(--color-line-strong)",
                       background: reached ? color : "transparent",
-                      boxShadow: current ? `0 0 10px ${color}66` : undefined,
+                      boxShadow: current ? `0 0 10px ${tint(color, 45)}` : undefined,
                     }}
                   >
-                    {reached && <Check className="size-2.5 text-onaccent" strokeWidth={4} />}
+                    {reached && <Check className="size-2.5 text-ink-900" strokeWidth={4} />}
                   </span>
                   <span className={cn("text-[8.5px] font-medium", reached ? "text-mist-300" : "text-mist-600")}>{p}</span>
                 </div>
                 {i < PHASE_RAIL.length - 1 && (
-                  <div className="mx-1 mb-4 h-0.5 flex-1 rounded-full" style={{ background: !lost && i < railIdx ? color : "#22252d" }} />
+                  <div className="mx-1 mb-4 h-0.5 flex-1 rounded-full" style={{ background: !lost && i < railIdx ? color : "var(--color-line)" }} />
                 )}
               </div>
             );
@@ -88,13 +88,13 @@ function Body({ lead }: { lead: Lead }) {
       {/* mini kpis */}
       <div className="mt-4 grid grid-cols-4 gap-2">
         {[
-          { icon: <Wallet className="size-3.5" />, label: "LTV", value: lead.ltv ? fmt.inrC(lead.ltv) : "—", tone: "#fbbf24" },
-          { icon: <ShoppingBag className="size-3.5" />, label: "Purchases", value: lead.purchases ? String(lead.purchases) : "—", tone: "#38bdf8" },
-          { icon: <Footprints className="size-3.5" />, label: "Visits", value: lead.visits ? String(lead.visits) : "—", tone: "#a78bfa" },
-          { icon: <MessagesSquare className="size-3.5" />, label: "Follow-ups", value: lead.fupCount ? String(lead.fupCount) : "—", tone: "#ff6b47" },
+          { icon: <Wallet className="size-3.5" />, label: "LTV", value: lead.ltv ? fmt.inrC(lead.ltv) : "—", tone: "var(--color-gold-400)" },
+          { icon: <ShoppingBag className="size-3.5" />, label: "Purchases", value: lead.purchases ? String(lead.purchases) : "—", tone: "var(--color-sky-400)" },
+          { icon: <Footprints className="size-3.5" />, label: "Visits", value: lead.visits ? String(lead.visits) : "—", tone: "var(--color-violet-400)" },
+          { icon: <MessagesSquare className="size-3.5" />, label: "Follow-ups", value: lead.fupCount ? String(lead.fupCount) : "—", tone: "var(--color-ember-500)" },
         ].map((k) => (
           <div key={k.label} className="rounded-xl border border-line-soft bg-ink-850/50 p-2.5 text-center">
-            <span className="mx-auto mb-1 flex size-6 items-center justify-center rounded-md" style={{ color: k.tone, background: k.tone + "14" }}>
+            <span className="mx-auto mb-1 flex size-6 items-center justify-center rounded-md" style={{ color: k.tone, background: tint(k.tone, 12) }}>
               {k.icon}
             </span>
             <p className="tnum text-[13px] font-semibold text-mist-100">{k.value}</p>
@@ -107,17 +107,17 @@ function Body({ lead }: { lead: Lead }) {
         <Flag
           on={lead.trialed}
           label="Trial completed"
-          color="#a78bfa"
+          color="var(--color-violet-400)"
           hint={lead.trialed ? `Attended a class on ${fmt.date(lead.trialDate)} — from the Bookings sheet` : "No class attended after the enquiry date"}
         />
         <Flag
           on={lead.conv}
           label="Converted"
-          color="#34d399"
+          color="var(--color-mint-400)"
           hint={lead.conv ? `Bought ${lead.sales.find((s) => s.converting && s.postLead)?.product} on ${fmt.date(lead.firstSaleDate)}` : "No qualifying purchase after the enquiry date (intro offers, retail and credits do not count)"}
         />
-        <Flag on={lead.retained} label="Retained" color="#a3e635" />
-        <Flag on={lead.ltv > 0} label="Paying" color="#fbbf24" hint={`${fmt.inr(lead.ltv)} spent after the enquiry`} />
+        <Flag on={lead.retained} label="Retained" color="var(--color-lime-400)" />
+        <Flag on={lead.ltv > 0} label="Paying" color="var(--color-gold-400)" hint={`${fmt.inr(lead.ltv)} spent after the enquiry`} />
       </div>
 
       <div className="mt-4 divide-y divide-line-soft rounded-xl border border-line-soft bg-ink-850/40 px-3.5">
@@ -193,7 +193,7 @@ function SaleLine({ s, created }: { s: Sale; created: string }) {
     <li className="relative">
       <span
         className={cn("absolute -left-[21px] top-1.5 size-2.5 rounded-full border-2 border-ink-900")}
-        style={{ background: s.converting && !pre ? "#34d399" : pre ? "#3f444e" : "#fbbf24" }}
+        style={{ background: s.converting && !pre ? "var(--color-mint-400)" : pre ? "var(--color-line-strong)" : "var(--color-gold-400)" }}
       />
       <div className="flex items-baseline justify-between gap-2">
         <p className="truncate text-[12px] font-medium text-mist-200">{s.product}</p>
@@ -209,11 +209,11 @@ function SaleLine({ s, created }: { s: Sale; created: string }) {
       )}
       <div className="mt-1 flex flex-wrap gap-1">
         {pre ? (
-          <Tag color="#71717a" icon={<CircleSlash className="size-2.5" />} label={`before enquiry (${fmt.date(created)})`} />
+          <Tag color="var(--color-zinc-400)" icon={<CircleSlash className="size-2.5" />} label={`before enquiry (${fmt.date(created)})`} />
         ) : s.converting ? (
-          <Tag color="#34d399" icon={<BadgeCheck className="size-2.5" />} label="counts as conversion" />
+          <Tag color="var(--color-mint-400)" icon={<BadgeCheck className="size-2.5" />} label="counts as conversion" />
         ) : (
-          <Tag color="#fbbf24" icon={<Ban className="size-2.5" />} label="excluded — intro / retail / credits" />
+          <Tag color="var(--color-gold-400)" icon={<Ban className="size-2.5" />} label="excluded — intro / retail / credits" />
         )}
       </div>
     </li>
@@ -224,7 +224,7 @@ function Tag({ color, icon, label }: { color: string; icon: React.ReactNode; lab
   return (
     <span
       className="inline-flex items-center gap-1 rounded px-1.5 py-px text-[9.5px] font-medium"
-      style={{ background: color + "1f", color }}
+      style={{ background: tint(color, 14), color }}
     >
       {icon}
       {label}
@@ -264,11 +264,11 @@ function SalesHistory({ lead }: { lead: Lead }) {
 /* ───────────────────── Visit history (Bookings sheet) ──────────────── */
 
 function visitTone(v: Visit) {
-  if (v.attended) return { c: "#a78bfa", t: "Attended" };
-  if (v.noShow) return { c: "#fb7185", t: "No show" };
-  if (v.lateCancelled) return { c: "#f97316", t: "Late cancelled" };
-  if (v.cancelled) return { c: "#71717a", t: "Cancelled" };
-  return { c: "#52525b", t: "Not attended" };
+  if (v.attended) return { c: "var(--color-violet-400)", t: "Attended" };
+  if (v.noShow) return { c: "var(--color-rose-400)", t: "No show" };
+  if (v.lateCancelled) return { c: "var(--color-ember-600)", t: "Late cancelled" };
+  if (v.cancelled) return { c: "var(--color-zinc-400)", t: "Cancelled" };
+  return { c: "var(--color-mist-500)", t: "Not attended" };
 }
 
 function VisitHistory({ lead }: { lead: Lead }) {
@@ -380,8 +380,12 @@ export function LeadDrawer() {
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-onaccent"
-                  style={{ background: statusColor(lead.status) }}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+                  style={{
+                    background: tint(statusColor(lead.status), 16),
+                    borderColor: tint(statusColor(lead.status), 42),
+                    color: statusColor(lead.status),
+                  }}
                 >
                   {lead.status}
                 </span>

@@ -289,27 +289,32 @@ export async function loadLeads(): Promise<LeadData> {
 
 export type Tone = "mint" | "rose" | "sky" | "amber" | "violet" | "cyan" | "zinc" | "ember";
 
+/* Colours are CSS custom properties, not literals, so light mode can restate
+   them without every component knowing which theme is on. */
 export const STATUS_META: Record<string, { color: string; label: string; tone: Tone }> = {
-  Won: { color: "#34d399", label: "Won", tone: "mint" },
-  Lost: { color: "#fb7185", label: "Lost", tone: "rose" },
-  Open: { color: "#38bdf8", label: "Open", tone: "sky" },
-  "Trial Completed": { color: "#a78bfa", label: "Trial Completed", tone: "violet" },
-  "Trial Scheduled": { color: "#22d3ee", label: "Trial Scheduled", tone: "cyan" },
-  Unresponsive: { color: "#fbbf24", label: "Unresponsive", tone: "amber" },
-  Disqualified: { color: "#71717a", label: "Disqualified", tone: "zinc" },
-  Uncategorized: { color: "#52525b", label: "Uncategorized", tone: "zinc" },
+  Won: { color: "var(--color-mint-400)", label: "Won", tone: "mint" },
+  Lost: { color: "var(--color-rose-400)", label: "Lost", tone: "rose" },
+  Open: { color: "var(--color-sky-400)", label: "Open", tone: "sky" },
+  "Trial Completed": { color: "var(--color-violet-400)", label: "Trial Completed", tone: "violet" },
+  "Trial Scheduled": { color: "var(--color-cyan-400)", label: "Trial Scheduled", tone: "cyan" },
+  Unresponsive: { color: "var(--color-gold-400)", label: "Unresponsive", tone: "amber" },
+  Disqualified: { color: "var(--color-zinc-400)", label: "Disqualified", tone: "zinc" },
+  Uncategorized: { color: "var(--color-mist-500)", label: "Uncategorized", tone: "zinc" },
 };
-export const statusColor = (s: string) => STATUS_META[s]?.color ?? "#8b8f9a";
+export const statusColor = (s: string) => STATUS_META[s]?.color ?? "var(--color-mist-500)";
+
+/** A translucent wash of any colour — safe with CSS variables. */
+export const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 export type Phase = "Prospect" | "Engagement" | "Trial" | "Decision" | "Won" | "Lost";
 
 export const PHASE_META: Record<Phase, { color: string; rank: number }> = {
-  Prospect: { color: "#38bdf8", rank: 0 },
-  Engagement: { color: "#fbbf24", rank: 1 },
-  Trial: { color: "#a78bfa", rank: 2 },
-  Decision: { color: "#22d3ee", rank: 3 },
-  Won: { color: "#34d399", rank: 4 },
-  Lost: { color: "#fb7185", rank: 5 },
+  Prospect: { color: "var(--color-sky-400)", rank: 0 },
+  Engagement: { color: "var(--color-gold-400)", rank: 1 },
+  Trial: { color: "var(--color-violet-400)", rank: 2 },
+  Decision: { color: "var(--color-cyan-400)", rank: 3 },
+  Won: { color: "var(--color-mint-400)", rank: 4 },
+  Lost: { color: "var(--color-rose-400)", rank: 5 },
 };
 
 export function stagePhase(stage: string): Phase {
@@ -332,7 +337,8 @@ export const fmt = {
   int: (n: number) => numFull.format(Math.round(n)),
   compact: (n: number) => numCompact.format(n),
   inr: (n: number) => "₹" + inrFull.format(Math.round(n)),
-  inrC: (n: number) => "₹" + inrCompact.format(n),
+  // below a thousand the compact form ("₹403.6") reads worse than the plain one
+  inrC: (n: number) => "₹" + (Math.abs(n) < 1000 ? inrFull.format(Math.round(n)) : inrCompact.format(n)),
   pct: (n: number, digits = 1) => (Number.isFinite(n) ? n.toFixed(digits) + "%" : "—"),
   date: (iso: string) => {
     if (!iso) return "—";
@@ -364,7 +370,7 @@ export const fmt = {
 
 /* ─────────────────────────── Mix utilities ──────────────────────── */
 
-export const PALETTE = ["#ff6b47", "#38bdf8", "#a78bfa", "#34d399", "#fbbf24", "#fb7185", "#22d3ee", "#f472b6", "#a3e635", "#94a3b8"];
+export const PALETTE = Array.from({ length: 10 }, (_, i) => `var(--color-series-${i + 1})`);
 
 export const CHANNEL_SHORT: Record<string, string> = {
   "Website & Online Sources": "Website & Online",

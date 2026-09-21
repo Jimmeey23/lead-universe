@@ -168,12 +168,12 @@ export function funnel(rows: Lead[]): FunnelStep[] {
   const conv = rows.filter((l) => l.conv).length;
   const ret = rows.filter((l) => l.retained).length;
   const stages: [string, number, string][] = [
-    ["All Leads", total, "#ff6b47"],
-    ["Engaged", engaged, "#fbbf24"],
-    ["Trial Scheduled", trialSet, "#22d3ee"],
-    ["Trial Completed", trialed, "#a78bfa"],
-    ["Converted", conv, "#34d399"],
-    ["Retained", ret, "#a3e635"],
+    ["All Leads", total, "var(--color-ember-500)"],
+    ["Engaged", engaged, "var(--color-gold-400)"],
+    ["Trial Scheduled", trialSet, "var(--color-cyan-400)"],
+    ["Trial Completed", trialed, "var(--color-violet-400)"],
+    ["Converted", conv, "var(--color-mint-400)"],
+    ["Retained", ret, "var(--color-lime-400)"],
   ];
   let prev = 0;
   return stages.map(([label, count, color], i) => {
@@ -390,4 +390,120 @@ export function rankPct(values: number[], v: number): number {
   if (values.length < 2) return 100;
   const below = values.filter((x) => x < v).length;
   return (below / (values.length - 1)) * 100;
+}
+
+/* ───────────────── Associate drill-down analytics ────────────────── */
+
+export interface Bucket {
+  label: string;
+  leads: number;
+  won: number;
+  rate: number;
+}
+
+export interface AssociateDetail {
+  name: string;
+  leads: Lead[];
+  /** Follow-up effort vs. outcome — does chasing harder actually pay off? */
+  fupBuckets: Bucket[];
+  /** How long conversions take once they happen. */
+  speedBuckets: { label: string; n: number }[];
+  statusMix: Agg[];
+  sourceMix: Agg[];
+  centreMix: Agg[];
+  classMix: Agg[];
+  /** Products their converted leads actually bought. */
+  products: { name: string; n: number; value: number }[];
+  monthly: { m: string; leads: number; won: number; revenue: number; convRate: number }[];
+  visitsPerConverted: number;
+  lateCancelRate: number;
+  untouched: number;
+  ageingOpen: number; // open leads with no follow-up in 30+ days
+}
+
+const FUP_BUCKETS: [string, (n: number) => boolean][] = [
+  ["0", (n) => n === 0],
+  ["1", (n) => n === 1],
+  ["2", (n) => n === 2],
+  ["3", (n) => n === 3],
+  ["4+", (n) => n >= 4],
+];
+
+const SPEED_BUCKETS: [string, (d: number) => boolean][] = [
+  ["same day", (d) => d === 0],
+  ["1–7d", (d) => d >= 1 && d <= 7],
+  ["8–30d", (d) => d >= 8 && d <= 30],
+  ["31–90d", (d) => d >= 31 && d <= 90],
+  ["90d+", (d) => d > 90],
+];
+
+export function associateDetail(name: string, rows: Lead[], months: string[]): AssociateDetail {
+  const leads = rows.filter((l) => l.associate === name);
+
+  const fupBuckets: Bucket[] = FUP_BUCKETS.map(([label, test]) => {
+    const set = leads.filter((l) => test(l.fupCount));
+    const won = set.filter((l) => l.conv).length;
+    return { label, leads: set.length, won, rate: set.length ? (won / set.length) * 100 : 0 };
+  });
+
+  const speedBuckets = SPEED_BUCKETS.map(([label, test]) => ({
+    label,
+    n: leads.filter((l) => l.daysToConvert != null && test(l.daysToConvert)).length,
+  }));
+
+  const prod = new Map<string, { n: number; value: number }>();
+  let visits = 0, convCount = 0, bookings = 0, lateCancels = 0;
+  for (const l of leads) {
+    if (l.conv) { convCount++; visits += l.visits; }
+    bookings += l.bookings;
+    for (const v of l.visitLog) if (v.postLead && v.lateCancelled) lateCancels++;
+    for (const s of l.sales) {
+      if (!s.postLead || !s.converting) continue;
+      const cur = prod.get(s.product) ?? { n: 0, value: 0 };
+      cur.n++; cur.value += s.value;
+      prod.set(s.product, cur);
+    }
+  }
+
+  const monthMap = new Map(months.map((m) => [m, { m, leads: 0, won: 0, revenue: 0, convRate: 0 }]));
+  for (const l of leads) {
+    const p = monthMap.get(l.createdMonth);
+    if (!p) continue;
+    p.leads++;
+    if (l.conv) { p.won++; p.revenue += l.ltv; }
+  }
+  const monthly = [...monthMap.values()];
+  for (const p of monthly) p.convRate = p.leads ? (p.won / p.leads) * 100 : 0;
+
+  const now = Date.now();
+  const openish = (l: Lead) => !l.conv && !["Lost", "Disqualified"].includes(l.status);
+  const lastTouch = (l: Lead) => {
+    const last = l.fups[l.fups.length - 1]?.d;
+    return last ? Date.parse(last + "T00:00:00") : l.createdTs;
+  };
+
+  return {
+    name,
+    leads,
+    fupBuckets,
+    speedBuckets,
+    statusMix: groupAgg(leads, (l) => l.status),
+    sourceMix: groupAgg(leads, (l) => l.source).slice(0, 8),
+    centreMix: groupAgg(leads, (l) => l.center),
+    classMix: groupAgg(leads, (l) => l.cls),
+    products: [...prod.entries()]
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8),
+    monthly,
+    visitsPerConverted: convCount ? visits / convCount : 0,
+    lateCancelRate: bookings ? (lateCancels / bookings) * 100 : 0,
+    untouched: leads.filter((l) => l.fupCount === 0 && !l.remarks).length,
+    ageingOpen: leads.filter((l) => openish(l) && now - lastTouch(l) > 30 * 86400000).length,
+  };
+}
+
+/** Monthly lead counts for an associate, as a plain array for sparklines. */
+export function assocSpark(a: AssociateStat, months: string[]): number[] {
+  return months.map((m) => a.months.get(m)?.leads ?? 0);
 }

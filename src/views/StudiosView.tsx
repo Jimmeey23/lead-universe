@@ -105,7 +105,7 @@ export function StudiosView() {
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
-                        <Meter value={c.total} max={maxLeads} color={active ? "var(--color-ember-500)" : "#3a4152"} className="h-1.5" />
+                        <Meter value={c.total} max={maxLeads} color={active ? "var(--color-ember-500)" : "var(--color-mist-500)"} className="h-1.5" />
                         <span className="tnum w-9 text-[10px] text-mist-500">{fmt.pct((c.total / (netKpis.total || 1)) * 100, 0)}</span>
                       </div>
                     </td>
@@ -148,10 +148,10 @@ export function StudiosView() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           <Kpi label="Leads" value={fmt.compact(kpis.total)} icon={<Users className="size-3.5" />} sub={<>{fmt.pct((kpis.total / (netKpis.total || 1)) * 100)} of selection</>} />
-          <Kpi label="Conversion" value={fmt.pct(kpis.convRate)} icon={<Percent className="size-3.5" />} tone="#34d399" delay={0.04} sub={<>network avg {fmt.pct(networkConv)}</>} />
-          <Kpi label="Trial rate" value={fmt.pct(kpis.trialRate, 0)} icon={<Sparkles className="size-3.5" />} tone="#a78bfa" delay={0.08} sub={<>{fmt.pct(kpis.trialToWin)} trial→win</>} />
-          <Kpi label="Revenue" value={fmt.inrC(kpis.ltv)} icon={<Wallet className="size-3.5" />} tone="#fbbf24" delay={0.12} sub={<>{fmt.pct(netKpis.ltv ? (kpis.ltv / netKpis.ltv) * 100 : 0, 0)} of network</>} />
-          <Kpi label="Rev / lead" value={fmt.inrC(kpis.ltvPerLead)} icon={<Gauge className="size-3.5" />} tone="#38bdf8" delay={0.16} sub={<>network {fmt.inrC(netKpis.ltvPerLead)}</>} />
+          <Kpi label="Conversion" value={fmt.pct(kpis.convRate)} icon={<Percent className="size-3.5" />} tone="var(--color-mint-400)" delay={0.04} sub={<>network avg {fmt.pct(networkConv)}</>} />
+          <Kpi label="Trial rate" value={fmt.pct(kpis.trialRate, 0)} icon={<Sparkles className="size-3.5" />} tone="var(--color-violet-400)" delay={0.08} sub={<>{fmt.pct(kpis.trialToWin)} trial→win</>} />
+          <Kpi label="Revenue" value={fmt.inrC(kpis.ltv)} icon={<Wallet className="size-3.5" />} tone="var(--color-gold-400)" delay={0.12} sub={<>{fmt.pct(netKpis.ltv ? (kpis.ltv / netKpis.ltv) * 100 : 0, 0)} of network</>} />
+          <Kpi label="Rev / lead" value={fmt.inrC(kpis.ltvPerLead)} icon={<Gauge className="size-3.5" />} tone="var(--color-sky-400)" delay={0.16} sub={<>network {fmt.inrC(netKpis.ltvPerLead)}</>} />
         </div>
       </div>
 
@@ -185,7 +185,7 @@ export function StudiosView() {
                     {fmt.compact(c.total)} · <span className="text-mint-400">{fmt.pct(c.convRate)}</span>
                   </span>
                 </div>
-                <Meter value={c.total} max={byClass[0]?.total ?? 1} color="linear-gradient(90deg,#a78bfa,#22d3ee)" className="h-1.5" />
+                <Meter value={c.total} max={byClass[0]?.total ?? 1} color="linear-gradient(90deg,var(--color-violet-400),var(--color-cyan-400))" className="h-1.5" />
               </div>
             ))}
           </div>

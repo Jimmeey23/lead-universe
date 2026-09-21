@@ -98,10 +98,10 @@ export function OverviewView() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Leads" value={fmt.compact(kpis.total)} icon={<Users className="size-3.5" />} spark={sparkLeads} sub={<>volume shift <Delta v={leadDelta} /> vs prior half</>} />
-        <Kpi label="Conversion" value={fmt.pct(kpis.convRate)} icon={<Percent className="size-3.5" />} tone="#34d399" spark={sparkConv} delay={0.04} sub={<>{fmt.int(kpis.won)} won of {fmt.int(kpis.total)}</>} />
-        <Kpi label="Trials done" value={fmt.compact(kpis.trialed)} icon={<Sparkles className="size-3.5" />} tone="#a78bfa" spark={sparkTrials} delay={0.08} sub={<>{fmt.pct(kpis.trialToWin)} convert after trial</>} />
-        <Kpi label="Revenue · LTV" value={fmt.inrC(kpis.ltv)} icon={<Wallet className="size-3.5" />} tone="#fbbf24" spark={sparkLtv} delay={0.12} sub={<>from {fmt.compact(kpis.purchases)} purchases</>} />
-        <Kpi label="Rev / lead" value={fmt.inrC(kpis.ltvPerLead)} icon={<Gauge className="size-3.5" />} tone="#38bdf8" delay={0.16} sub={<>blended acquisition yield</>} />
+        <Kpi label="Conversion" value={fmt.pct(kpis.convRate)} icon={<Percent className="size-3.5" />} tone="var(--color-mint-400)" spark={sparkConv} delay={0.04} sub={<>{fmt.int(kpis.won)} won of {fmt.int(kpis.total)}</>} />
+        <Kpi label="Trials done" value={fmt.compact(kpis.trialed)} icon={<Sparkles className="size-3.5" />} tone="var(--color-violet-400)" spark={sparkTrials} delay={0.08} sub={<>{fmt.pct(kpis.trialToWin)} convert after trial</>} />
+        <Kpi label="Revenue · LTV" value={fmt.inrC(kpis.ltv)} icon={<Wallet className="size-3.5" />} tone="var(--color-gold-400)" spark={sparkLtv} delay={0.12} sub={<>from {fmt.compact(kpis.purchases)} purchases</>} />
+        <Kpi label="Rev / lead" value={fmt.inrC(kpis.ltvPerLead)} icon={<Gauge className="size-3.5" />} tone="var(--color-sky-400)" delay={0.16} sub={<>blended acquisition yield</>} />
         <Kpi label="Follow-up avg" value={kpis.avgFups.toFixed(2)} icon={<MessagesSquare className="size-3.5" />} delay={0.2} sub={<>{fmt.pct(kpis.engagedPct, 0)} of leads touched</>} />
       </div>
 
@@ -144,7 +144,7 @@ export function OverviewView() {
           className="xl:col-span-7"
           title="Conversion funnel"
           sub="Stage-to-stage progression across the current selection"
-          right={<LegendDot color="#ff6b47" label="share of leads" />}
+          right={<LegendDot color="var(--color-ember-500)" label="share of leads" />}
         >
           <Funnel
             steps={fun}
@@ -186,9 +186,9 @@ export function OverviewView() {
         sub="Lead volume, trials and wins by creation month"
         right={
           <div className="flex items-center gap-3">
-            <LegendDot color="#ff6b47" label="Leads in" />
-            <LegendDot color="#a78bfa" label="Trials" />
-            <LegendDot color="#34d399" label="Won" />
+            <LegendDot color="var(--color-ember-500)" label="Leads in" />
+            <LegendDot color="var(--color-violet-400)" label="Trials" />
+            <LegendDot color="var(--color-mint-400)" label="Won" />
           </div>
         }
       >
@@ -258,21 +258,21 @@ export function OverviewView() {
           </div>
         </Panel>
         <Panel className="xl:col-span-5" title="Day-of-week intake" sub="When enquiries arrive · conversion overlay">
-          <div className="flex h-[210px] items-end gap-2 px-1 pt-2">
+          <div className="flex h-[210px] items-stretch gap-2 px-1 pt-2">
             {dow.map((d) => {
               const max = Math.max(...dow.map((x) => x.leads), 1);
               const rate = d.leads ? (d.won / d.leads) * 100 : 0;
               return (
-                <div key={d.d} className="group flex flex-1 flex-col items-center gap-1.5">
+                <div key={d.d} className="group flex h-full flex-1 flex-col items-center gap-1.5">
                   <span className="tnum text-[9.5px] text-mist-600 opacity-0 transition-opacity group-hover:opacity-100">{fmt.compact(d.leads)}</span>
-                  <div className="relative flex h-full w-full items-end overflow-hidden rounded-md bg-ink-850">
+                  <div className="relative w-full flex-1 overflow-hidden rounded-md bg-ink-850">
                     <div
                       className="absolute bottom-0 w-full rounded-t-md transition-all duration-500 group-hover:brightness-125"
-                      style={{ height: `${(d.leads / max) * 100}%`, background: "linear-gradient(180deg,#38bdf8,#38bdf833)" }}
+                      style={{ height: `${(d.leads / max) * 100}%`, background: "linear-gradient(180deg, var(--color-sky-400), color-mix(in srgb, var(--color-sky-400) 22%, transparent))" }}
                     />
                     <div
                       className="absolute bottom-0 w-full rounded-t-md transition-all duration-500"
-                      style={{ height: `${(d.won / max) * 100}%`, background: "linear-gradient(180deg,#34d399,#34d39933)" }}
+                      style={{ height: `${(d.won / max) * 100}%`, background: "linear-gradient(180deg, var(--color-mint-400), color-mix(in srgb, var(--color-mint-400) 22%, transparent))" }}
                     />
                   </div>
                   <span className="text-[10px] font-medium text-mist-400">{d.d}</span>
@@ -282,8 +282,8 @@ export function OverviewView() {
             })}
           </div>
           <div className="mt-3 flex justify-center gap-4">
-            <LegendDot color="#38bdf8" label="Leads in" />
-            <LegendDot color="#34d399" label="Won" />
+            <LegendDot color="var(--color-sky-400)" label="Leads in" />
+            <LegendDot color="var(--color-mint-400)" label="Won" />
           </div>
           <div className="mt-4 rounded-lg border border-line-soft bg-ink-850/50 p-3">
             <p className="flex items-center gap-1.5 text-[11px] font-medium text-mist-300">

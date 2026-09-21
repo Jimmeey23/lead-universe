@@ -221,7 +221,7 @@ export function MultiSelect({
 /* ─────────────────────────── Flag toggle ────────────────────────── */
 
 export function FlagToggle({
-  label, value, onChange, onColor = "#34d399",
+  label, value, onChange, onColor = "var(--color-mint-400)",
 }: {
   label: string;
   value: "any" | "yes" | "no";
@@ -235,17 +235,22 @@ export function FlagToggle({
       title={`${label}: ${value === "any" ? "ignored" : value}. Click to cycle.`}
       className={cn(
         "flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11.5px] font-medium transition-colors",
-        value === "yes" && "border-transparent text-onaccent",
+        value === "yes" && "font-semibold",
         value === "no" && "border-rose-400/50 bg-rose-400/10 text-rose-400",
         value === "any" && "border-line bg-ink-850 text-mist-500 hover:text-mist-200 hover:border-line-strong",
       )}
-      style={value === "yes" ? { background: onColor } : undefined}
+      style={
+        value === "yes"
+          ? { background: `color-mix(in srgb, ${onColor} 16%, transparent)`, borderColor: `color-mix(in srgb, ${onColor} 45%, transparent)`, color: onColor }
+          : undefined
+      }
     >
       <span
         className={cn(
           "size-1.5 rounded-full",
-          value === "any" ? "bg-mist-600" : value === "yes" ? "bg-onaccent" : "bg-rose-400",
+          value === "any" ? "bg-mist-600" : value === "no" && "bg-rose-400",
         )}
+        style={value === "yes" ? { background: onColor } : undefined}
       />
       {label}
       {value !== "any" && <span className="text-[10px] opacity-70">{value === "yes" ? "only" : "excl."}</span>}

@@ -81,6 +81,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/**
+ * Resolves CSS custom properties to concrete colours for the current theme.
+ * Recharts drops `var(...)` in a few places (Radar fills), so charts that need
+ * a literal colour read it through here and re-render when the theme flips.
+ */
+export function useResolvedColors(vars: string[]): string[] {
+  const { theme } = useApp();
+  return useMemo(() => {
+    if (typeof window === "undefined") return vars;
+    const cs = getComputedStyle(document.documentElement);
+    return vars.map((v) => {
+      const name = /^var\((--[^)]+)\)$/.exec(v.trim())?.[1];
+      if (!name) return v;
+      return cs.getPropertyValue(name).trim() || v;
+    });
+    // theme is the trigger: the variables themselves do not change identity
+  }, [vars, theme]);
+}
+
 export function useApp(): AppState {
   const v = useContext(Ctx);
   if (!v) throw new Error("useApp outside provider");

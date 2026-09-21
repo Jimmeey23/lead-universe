@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+@theme static {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -38,6 +38,21 @@
   --color-violet-400: #a78bfa;
   --color-rose-400: #fb7185;
   --color-cyan-400: #22d3ee;
+  --color-zinc-400: #71717a;
+  --color-lime-400: #a3e635;
+
+  /* Categorical series, used by every chart. Overridden in light mode so the
+     same ink reads at the same weight on a white page. */
+  --color-series-1: #ff6b47;
+  --color-series-2: #38bdf8;
+  --color-series-3: #a78bfa;
+  --color-series-4: #34d399;
+  --color-series-5: #fbbf24;
+  --color-series-6: #fb7185;
+  --color-series-7: #22d3ee;
+  --color-series-8: #f472b6;
+  --color-series-9: #a3e635;
+  --color-series-10: #94a3b8;
 
   /* Text that always sits on a bright accent fill (ember, mint, gold chips) —
      stays dark in both themes. */
@@ -83,6 +98,19 @@
   --color-violet-400: #7c5cf5;
   --color-rose-400: #e4374f;
   --color-cyan-400: #0e93b0;
+  --color-zinc-400: #6b7280;
+  --color-lime-400: #5f9e0f;
+
+  --color-series-1: #e8502a;
+  --color-series-2: #0b7fc4;
+  --color-series-3: #6d4cf0;
+  --color-series-4: #0f9d6e;
+  --color-series-5: #b7810b;
+  --color-series-6: #dc2b46;
+  --color-series-7: #0b8ca8;
+  --color-series-8: #d63a8c;
+  --color-series-9: #5f9e0f;
+  --color-series-10: #64748b;
 
   --shadow-panel: 0 18px 44px rgba(16, 19, 24, 0.14);
 }
@@ -228,4 +256,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 :root[data-theme="light"] .scrim {
   background: rgba(24, 28, 36, 0.32);
+}
+
+/* The funnel count sits on top of its own bar — additive blending only makes
+   sense over a dark track. */
+.on-bar {
+  mix-blend-mode: plus-lighter;
+}
+:root[data-theme="light"] .on-bar {
+  mix-blend-mode: normal;
 }
