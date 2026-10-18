@@ -48,6 +48,70 @@ const dicts = { stage: [], status: [], center: [], cls: [], source: [], assoc: [
 const dmap = Object.fromEntries(Object.keys(dicts).map(k => [k, new Map()]));
 const D = (k, v) => { const m = dmap[k]; if (m.has(v)) return m.get(v); const i = dicts[k].length; m.set(v, i); dicts[k].push(v); return i; };
 
+function parseSheetDate(raw) {
+  if (raw === null || raw === undefined) return '';
+  const s = String(raw).trim();
+  if (!s || s === '-' || s === '—' || s === '0') return '';
+
+  const num = Number(s);
+  if (!isNaN(num) && num > 30000 && num < 70000) {
+    const ms = Math.round((num - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+  }
+
+  const ymd = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(s);
+  if (ymd) {
+    const y = ymd[1];
+    const m = ymd[2].padStart(2, '0');
+    const d = ymd[3].padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  const usComma = /^(\d{1,2})\/(\d{1,2})\/(\d{4}),/.exec(s);
+  if (usComma) {
+    const m = usComma[1].padStart(2, '0');
+    const d = usComma[2].padStart(2, '0');
+    const y = usComma[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  const dmy = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/.exec(s);
+  if (dmy) {
+    const p1 = parseInt(dmy[1], 10);
+    const p2 = parseInt(dmy[2], 10);
+    const y = dmy[3];
+    let d, m;
+    if (p1 > 12) {
+      d = String(p1).padStart(2, '0');
+      m = String(p2).padStart(2, '0');
+    } else if (p2 > 12) {
+      m = String(p1).padStart(2, '0');
+      d = String(p2).padStart(2, '0');
+    } else {
+      d = String(p1).padStart(2, '0');
+      m = String(p2).padStart(2, '0');
+    }
+    return `${y}-${m}-${d}`;
+  }
+
+  const parsed = Date.parse(s);
+  if (!isNaN(parsed)) {
+    const dt = new Date(parsed);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  return '';
+}
+
 const strT = [], strM = new Map();
 const S = (s) => { if (!s) return -1; if (strM.has(s)) return strM.get(s); const i = strT.length; strM.set(s, i); strT.push(s); return i; };
 const num = (s) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0; };
@@ -58,14 +122,14 @@ for (let i = 1; i < rows.length; i++) {
   const id = g(r, 'ID'); if (!id) continue;
   const fup = [];
   for (let f = 1; f <= 4; f++) {
-    const d = dash(g(r, `Follow Up ${f} Date`));
+    const d = parseSheetDate(dash(g(r, `Follow Up ${f} Date`)));
     const c = dash(g(r, `Follow Up Comments (${f})`));
     if (d || c) fup.push(d, S(c));
   }
   out.push([
     +id, g(r, 'Full Name') || 'Unknown',
     dash(g(r, 'Phone Number')), dash(g(r, 'Email')),
-    g(r, 'Created At') || '', dash(g(r, 'Converted To Customer At')),
+    parseSheetDate(g(r, 'Created At')), parseSheetDate(dash(g(r, 'Converted To Customer At'))),
     D('stage', cleanStage(g(r, 'Stage Name'))),
     D('status', g(r, 'Status') || 'Uncategorized'),
     D('center', cleanCenter(g(r, 'Center'))),

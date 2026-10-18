@@ -1,4 +1,4 @@
-import { Lead } from "./data";
+import { Lead, parseSheetDate } from "./data";
 
 /* ─────────────────────────── Filters ─────────────────────────────── */
 
@@ -64,8 +64,8 @@ const FLAG: Record<FlagFilter, (v: boolean) => boolean> = {
 
 export function applyFilters(leads: Lead[], f: Filters): Lead[] {
   const q = f.q.trim().toLowerCase();
-  const fromTs = f.from ? Date.parse(f.from + "T00:00:00") : null;
-  const toTs = f.to ? Date.parse(f.to + "T00:00:00") : null;
+  const from = f.from ? parseSheetDate(f.from) : "";
+  const to = f.to ? parseSheetDate(f.to) : "";
   const cSet = new Set(f.centers), stSet = new Set(f.statuses), sgSet = new Set(f.stages);
   const chSet = new Set(f.channels), soSet = new Set(f.sources), aSet = new Set(f.associates), clSet = new Set(f.classes);
   const fT = FLAG[f.trialed], fC = FLAG[f.conv], fR = FLAG[f.retained], fL = FLAG[f.hasLtv];
@@ -80,8 +80,8 @@ export function applyFilters(leads: Lead[], f: Filters): Lead[] {
     if (soSet.size && !soSet.has(l.source)) continue;
     if (aSet.size && !aSet.has(l.associate)) continue;
     if (clSet.size && !clSet.has(l.cls)) continue;
-    if (fromTs !== null && l.createdTs < fromTs) continue;
-    if (toTs !== null && l.createdTs > toTs) continue;
+    if (from && (!l.created || l.created < from)) continue;
+    if (to && (!l.created || l.created > to)) continue;
     if (!fT(l.trialed)) continue;
     if (!fC(l.conv)) continue;
     if (!fR(l.retained)) continue;

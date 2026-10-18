@@ -122,11 +122,98 @@ export interface LeadData {
   visitsCount: number;
 }
 
+/* ─────────────────────────── Date Helpers ─────────────────────────── */
+
+/**
+ * Normalizes any sheet date format into YYYY-MM-DD.
+ * Handles:
+ *  - Excel / Google Sheets serial numbers (e.g. 46304, 46304.0, "46304")
+ *  - ISO dates / timestamps (e.g. "2024-04-25", "2024-04-25 14:30:00", "2024-04-25T14:30:00.000Z")
+ *  - Indian / British DD/MM/YYYY or DD-MM-YYYY (e.g. "25/04/2024", "09/10/2026", "25-04-2024")
+ *  - US Momence export dates (e.g. "08/21/2026, 6:37 PM", "08/21/2026")
+ *  - Textual dates (e.g. "25-Apr-2024", "Apr 25, 2024")
+ */
+export function parseSheetDate(raw: unknown): string {
+  if (raw === null || raw === undefined) return "";
+  const s = String(raw).trim();
+  if (!s || s === "-" || s === "—" || s === "0") return "";
+
+  // 1. Numeric Excel / Google Sheets serial date (e.g. 46304, 46304.5, "46304.0")
+  const num = Number(s);
+  if (!isNaN(num) && num > 30000 && num < 70000) {
+    const ms = Math.round((num - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+  }
+
+  // 2. ISO or YYYY-MM-DD or YYYY/MM/DD prefix (e.g. "2024-04-25", "2024-04-25 14:30:00", "2024/04/25")
+  const ymd = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(s);
+  if (ymd) {
+    const y = ymd[1];
+    const m = ymd[2].padStart(2, "0");
+    const d = ymd[3].padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  // 3. Momence US format with comma: "08/21/2026, 6:37 PM"
+  const usComma = /^(\d{1,2})\/(\d{1,2})\/(\d{4}),/.exec(s);
+  if (usComma) {
+    const m = usComma[1].padStart(2, "0");
+    const d = usComma[2].padStart(2, "0");
+    const y = usComma[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  // 4. DD/MM/YYYY or MM/DD/YYYY or DD-MM-YYYY (e.g. "25/04/2024", "09/10/2026", "25-04-2024")
+  const dmy = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/.exec(s);
+  if (dmy) {
+    const p1 = parseInt(dmy[1], 10);
+    const p2 = parseInt(dmy[2], 10);
+    const y = dmy[3];
+    let d: string;
+    let m: string;
+    if (p1 > 12) {
+      // Must be DD/MM/YYYY
+      d = String(p1).padStart(2, "0");
+      m = String(p2).padStart(2, "0");
+    } else if (p2 > 12) {
+      // Must be MM/DD/YYYY
+      m = String(p1).padStart(2, "0");
+      d = String(p2).padStart(2, "0");
+    } else {
+      // Default to DD/MM/YYYY (Indian standard for Physique 57 India sheets)
+      d = String(p1).padStart(2, "0");
+      m = String(p2).padStart(2, "0");
+    }
+    return `${y}-${m}-${d}`;
+  }
+
+  // 5. Textual dates (e.g. "25-Apr-2024", "Apr 25, 2024", "25 April 2024")
+  const parsed = Date.parse(s);
+  if (!isNaN(parsed)) {
+    const dt = new Date(parsed);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const d = String(dt.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  return "";
+}
+
 /* ─────────────────────────── Decode ─────────────────────────────── */
 
 const DAY_MS = 86400000;
 const dayToIso = (d: number) => new Date(d * DAY_MS).toISOString().slice(0, 10);
-const isoToDay = (iso: string) => (iso ? Math.round(Date.parse(iso + "T00:00:00Z") / DAY_MS) : -1);
+const isoToDay = (iso: string) => {
+  const clean = parseSheetDate(iso);
+  return clean ? Math.round(Date.parse(clean + "T00:00:00Z") / DAY_MS) : -1;
+};
 
 let cache: LeadData | null = null;
 
@@ -142,24 +229,29 @@ export async function loadLeads(): Promise<LeadData> {
   const S = (i: number) => (i < 0 ? "" : s[i]);
 
   let totalLtv = 0;
-  let minTs = Infinity;
-  let maxTs = -Infinity;
+  let minDate = "";
+  let maxDate = "";
 
   const leads: Lead[] = raw.r.map((r) => {
-    const created = r[4] as string;
+    const created = parseSheetDate(r[4]);
+    const convertedInit = parseSheetDate(r[5]);
     const createdTs = created ? Date.parse(created + "T00:00:00") : 0;
-    if (createdTs && createdTs < minTs) minTs = createdTs;
-    if (createdTs && createdTs > maxTs) maxTs = createdTs;
+    if (created) {
+      if (!minDate || created < minDate) minDate = created;
+      if (!maxDate || created > maxDate) maxDate = created;
+    }
     const fups: FollowUp[] = [];
     const f = r[15] as any[];
-    for (let i = 0; i < f.length; i += 2) fups.push({ d: f[i] as string, c: S(f[i + 1]) });
+    for (let i = 0; i < f.length; i += 2) {
+      fups.push({ d: parseSheetDate(f[i]), c: S(f[i + 1]) });
+    }
     return {
       id: r[0],
       name: r[1],
       phone: r[2],
       email: r[3],
       created,
-      converted: "",
+      converted: convertedInit,
       stage: d.stage[r[6]],
       status: d.status[r[7]],
       center: d.center[r[8]],
@@ -272,13 +364,12 @@ export async function loadLeads(): Promise<LeadData> {
 
   for (const l of leads) totalLtv += l.ltv;
 
-  const iso = (ts: number) => new Date(ts).toISOString().slice(0, 10);
   cache = {
     leads,
     dicts: d,
     totalLtv,
-    minDate: iso(minTs),
-    maxDate: iso(maxTs),
+    minDate: minDate || "2024-01-01",
+    maxDate: maxDate || "2026-12-31",
     salesCount: raw.sl.length,
     visitsCount: raw.vs.length,
   };
@@ -341,17 +432,22 @@ export const fmt = {
   inrC: (n: number) => "₹" + (Math.abs(n) < 1000 ? inrFull.format(Math.round(n)) : inrCompact.format(n)),
   pct: (n: number, digits = 1) => (Number.isFinite(n) ? n.toFixed(digits) + "%" : "—"),
   date: (iso: string) => {
-    if (!iso) return "—";
-    const d = new Date(iso + "T00:00:00");
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" });
+    const clean = parseSheetDate(iso);
+    if (!clean) return "—";
+    const d = new Date(clean + "T00:00:00");
+    return isNaN(d.getTime()) ? clean : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" });
   },
   month: (ym: string) => {
-    const d = new Date(ym + "-01T00:00:00");
-    return d.toLocaleDateString("en-GB", { month: "short", year: "2-digit" });
+    const clean = parseSheetDate(ym);
+    const key = clean ? clean.slice(0, 7) : ym;
+    const d = new Date(key + "-01T00:00:00");
+    return isNaN(d.getTime()) ? ym : d.toLocaleDateString("en-GB", { month: "short", year: "2-digit" });
   },
   daysAgo: (iso: string) => {
-    if (!iso) return "—";
-    const t = Date.parse(iso + "T00:00:00");
+    const clean = parseSheetDate(iso);
+    if (!clean) return "—";
+    const t = Date.parse(clean + "T00:00:00");
+    if (isNaN(t)) return "—";
     const days = Math.max(0, Math.round((Date.now() - t) / 86400000));
     if (days === 0) return "today";
     if (days === 1) return "1d ago";

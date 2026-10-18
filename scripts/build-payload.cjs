@@ -60,11 +60,77 @@ function sheet(name) {
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
+function parseSheetDate(raw) {
+  if (raw === null || raw === undefined) return '';
+  const s = String(raw).trim();
+  if (!s || s === '-' || s === '—' || s === '0') return '';
+
+  const num = Number(s);
+  if (!isNaN(num) && num > 30000 && num < 70000) {
+    const ms = Math.round((num - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+  }
+
+  const ymd = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(s);
+  if (ymd) {
+    const y = ymd[1];
+    const m = ymd[2].padStart(2, '0');
+    const d = ymd[3].padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  const usComma = /^(\d{1,2})\/(\d{1,2})\/(\d{4}),/.exec(s);
+  if (usComma) {
+    const m = usComma[1].padStart(2, '0');
+    const d = usComma[2].padStart(2, '0');
+    const y = usComma[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  const dmy = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/.exec(s);
+  if (dmy) {
+    const p1 = parseInt(dmy[1], 10);
+    const p2 = parseInt(dmy[2], 10);
+    const y = dmy[3];
+    let d, m;
+    if (p1 > 12) {
+      d = String(p1).padStart(2, '0');
+      m = String(p2).padStart(2, '0');
+    } else if (p2 > 12) {
+      m = String(p1).padStart(2, '0');
+      d = String(p2).padStart(2, '0');
+    } else {
+      d = String(p1).padStart(2, '0');
+      m = String(p2).padStart(2, '0');
+    }
+    return `${y}-${m}-${d}`;
+  }
+
+  const parsed = Date.parse(s);
+  if (!isNaN(parsed)) {
+    const dt = new Date(parsed);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  return '';
+}
+
 const DAY = 86400000;
-/** "2026-09-01 15:01:07" | "2026-09-01" -> days since epoch, or -1 */
+/** "2026-09-01 15:01:07" | "2026-09-01" | "25/04/2024" | 46304 -> days since epoch, or -1 */
 const day = (s) => {
   if (!s) return -1;
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s.trim());
+  const iso = parseSheetDate(s);
+  if (!iso) return -1;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return -1;
   return Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / DAY);
 };
@@ -81,6 +147,15 @@ const prev = JSON.parse(
   zlib.gunzipSync(Buffer.from(fs.readFileSync(payloadPath, 'utf8').replace(/\s+/g, ''), 'base64')).toString(),
 );
 const leadRows = prev.r;
+leadRows.forEach((r) => {
+  r[4] = parseSheetDate(r[4]);
+  if (r[5]) r[5] = parseSheetDate(r[5]);
+  if (Array.isArray(r[15])) {
+    for (let i = 0; i < r[15].length; i += 2) {
+      r[15][i] = parseSheetDate(r[15][i]);
+    }
+  }
+});
 console.log('leads:', leadRows.length);
 
 const byEmail = new Map(), byMid = new Map();

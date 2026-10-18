@@ -39,15 +39,19 @@ export function FilterBar() {
 
   const applyPreset = (key: PresetKey) => {
     setPreset(key);
-    if (key === "range") return;
+    if (key === "range") {
+      setFilters((x) => ({ ...x, from: x.from || data.minDate, to: x.to || data.maxDate }));
+      return;
+    }
     const p = PRESETS.find((x) => x.key === key)!;
     if (!p.days) {
       setFilters((x) => ({ ...x, from: "", to: "" }));
       return;
     }
     const to = data.maxDate;
-    const fromTs = Date.parse(to + "T00:00:00") - (p.days - 1) * 86400000;
-    const from = new Date(fromTs).toISOString().slice(0, 10);
+    const [y, m, d] = to.split("-").map(Number);
+    const target = new Date(Date.UTC(y, m - 1, d - (p.days - 1)));
+    const from = target.toISOString().slice(0, 10);
     setFilters((x) => ({ ...x, from, to }));
   };
 
@@ -103,14 +107,20 @@ export function FilterBar() {
             {preset === "range" && (
               <div className="flex items-center gap-1 text-[11px] text-mist-500">
                 <input
-                  type="date" value={f.from} min={data.minDate} max={data.maxDate}
-                  onChange={(e) => setFilters((x) => ({ ...x, from: e.target.value }))}
+                  type="date" value={f.from} aria-label="Start date"
+                  onChange={(e) => {
+                    const from = e.target.value;
+                    setFilters((x) => ({ ...x, from, to: from && x.to && from > x.to ? from : x.to }));
+                  }}
                   className="h-8 rounded-lg border border-line bg-ink-850 px-1.5 text-[11px] text-mist-200 outline-none focus:border-ember-500/60"
                 />
                 <span>→</span>
                 <input
-                  type="date" value={f.to} min={data.minDate} max={data.maxDate}
-                  onChange={(e) => setFilters((x) => ({ ...x, to: e.target.value }))}
+                  type="date" value={f.to} aria-label="End date"
+                  onChange={(e) => {
+                    const to = e.target.value;
+                    setFilters((x) => ({ ...x, to, from: to && x.from && to < x.from ? to : x.from }));
+                  }}
                   className="h-8 rounded-lg border border-line bg-ink-850 px-1.5 text-[11px] text-mist-200 outline-none focus:border-ember-500/60"
                 />
               </div>
