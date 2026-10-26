@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useDeferredValue } from "react";
 import { Lead, LeadData, loadLeads } from "../lib/data";
 import { Filters, EMPTY_FILTERS, applyFilters } from "../lib/stats";
 
@@ -72,7 +72,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const openLead = useCallback((l: Lead | null) => setSelected(l), []);
   const toggleTheme = useCallback(() => setTheme((t) => (t === "dark" ? "light" : "dark")), []);
 
-  const filtered = useMemo(() => (data ? applyFilters(data.leads, filters) : []), [data, filters]);
+  // inputs update immediately; the 25k-lead refilter and every chart downstream catch up at low priority
+  const deferredFilters = useDeferredValue(filters);
+  const filtered = useMemo(() => (data ? applyFilters(data.leads, deferredFilters) : []), [data, deferredFilters]);
 
   const value = useMemo(
     () => ({ data, error, filters, setFilters, resetFilters, filtered, view, setView, selected, openLead, theme, toggleTheme }),

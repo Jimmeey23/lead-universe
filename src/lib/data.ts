@@ -133,8 +133,12 @@ export interface LeadData {
  *  - US Momence export dates (e.g. "08/21/2026, 6:37 PM", "08/21/2026")
  *  - Textual dates (e.g. "25-Apr-2024", "Apr 25, 2024")
  */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
 export function parseSheetDate(raw: unknown): string {
   if (raw === null || raw === undefined) return "";
+  // fast path: the packed payload already stores YYYY-MM-DD
+  if (typeof raw === "string" && raw.length === 10 && ISO_DAY.test(raw)) return raw;
   const s = String(raw).trim();
   if (!s || s === "-" || s === "—" || s === "0") return "";
 
@@ -209,17 +213,34 @@ export function parseSheetDate(raw: unknown): string {
 /* ─────────────────────────── Decode ─────────────────────────────── */
 
 const DAY_MS = 86400000;
-const dayToIso = (d: number) => new Date(d * DAY_MS).toISOString().slice(0, 10);
+const isoByDay = new Map<number, string>();
+// ~150k sales/visits share a few hundred distinct days, so format each once
+const dayToIso = (d: number) => {
+  let iso = isoByDay.get(d);
+  if (iso === undefined) {
+    iso = new Date(d * DAY_MS).toISOString().slice(0, 10);
+    isoByDay.set(d, iso);
+  }
+  return iso;
+};
 const isoToDay = (iso: string) => {
   const clean = parseSheetDate(iso);
   return clean ? Math.round(Date.parse(clean + "T00:00:00Z") / DAY_MS) : -1;
 };
 
+/** Native base64 decode; a per-character Uint8Array.from callback costs ~0.4s on this payload. */
+async function decodeBase64(b64: string): Promise<Uint8Array<ArrayBuffer>> {
+  const native = (Uint8Array as unknown as { fromBase64?: (s: string) => Uint8Array<ArrayBuffer> }).fromBase64;
+  if (native) return native(b64);
+  const res = await fetch("data:application/octet-stream;base64," + b64);
+  return new Uint8Array(await res.arrayBuffer());
+}
+
 let cache: LeadData | null = null;
 
 export async function loadLeads(): Promise<LeadData> {
   if (cache) return cache;
-  const bin = Uint8Array.from(atob(PAYLOAD_GZ_B64), (c) => c.charCodeAt(0));
+  const bin = await decodeBase64(PAYLOAD_GZ_B64);
   const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));
   const text = await new Response(stream).text();
   const raw = JSON.parse(text) as {
